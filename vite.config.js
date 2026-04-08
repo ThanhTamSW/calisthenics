@@ -6,6 +6,8 @@ export default defineConfig(({ mode }) => {
   const apiTarget = env.VITE_API_TARGET || "http://localhost:8080";
 
   return {
+    // GitHub Pages project site path (https://<user>.github.io/calisthenics/)
+    base: "/calisthenics/",
     plugins: [react()],
     test: {
       environment: "jsdom",
