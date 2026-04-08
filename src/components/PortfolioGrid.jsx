@@ -88,7 +88,112 @@ const FALLBACK_PROJECTS = [
   },
 ];
 
+const CARD_CAROUSEL_AUTOPLAY_MS = 3500;
+
+const RAW_IMAGE_MODULES = import.meta.glob("../../images/premium1*.{png,jpg,jpeg,webp,avif,gif,svg}", {
+  eager: true,
+  import: "default",
+});
+
+function normalizeText(value) {
+  return (value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function buildImageGroups(modules) {
+  const groups = {};
+
+  Object.entries(modules).forEach(([path, url]) => {
+    const fileName = path.split("/").pop() || "";
+    const baseName = fileName.replace(/\.[^.]+$/, "").toLowerCase();
+    const suffixMatch = baseName.match(/_(\d+)$/);
+    const key = baseName.replace(/_(\d+)$/, "");
+    const order = suffixMatch ? Number.parseInt(suffixMatch[1], 10) : 0;
+
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({ url, order, fileName });
+  });
+
+  Object.keys(groups).forEach((key) => {
+    groups[key].sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.fileName.localeCompare(b.fileName);
+    });
+    groups[key] = groups[key].map((item) => item.url);
+  });
+
+  return groups;
+}
+
+const IMAGE_GROUPS = buildImageGroups(RAW_IMAGE_MODULES);
+
+const TITLE_IMAGE_RULES = [
+  {
+    key: "premium1",
+    match: (title) => title.includes("top 1 premium battle"),
+  },
+];
+
+function resolveProjectImages(project) {
+  const normalizedTitle = normalizeText(project.title);
+  const rule = TITLE_IMAGE_RULES.find((item) => item.match(normalizedTitle));
+
+  if (!rule) {
+    return project.thumbnail ? [project.thumbnail] : [];
+  }
+
+  const images = IMAGE_GROUPS[rule.key] || [];
+  if (images.length > 0) return images;
+  return project.thumbnail ? [project.thumbnail] : [];
+}
+
+function attachProjectImages(list) {
+  if (!Array.isArray(list)) return [];
+  return list.map((project) => {
+    const images = resolveProjectImages(project);
+    return {
+      ...project,
+      images,
+      thumbnail: project.thumbnail || images[0] || "",
+    };
+  });
+}
+
 function ProjectCard({ project, index }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const images = Array.isArray(project.images) && project.images.length > 0
+    ? project.images
+    : project.thumbnail
+      ? [project.thumbnail]
+      : [];
+  const hasCarousel = images.length > 1;
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [project.id, images.length]);
+
+  useEffect(() => {
+    if (!hasCarousel) return undefined;
+
+    const timer = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % images.length);
+    }, CARD_CAROUSEL_AUTOPLAY_MS);
+
+    return () => clearInterval(timer);
+  }, [hasCarousel, images.length]);
+
+  const goPrev = () => {
+    setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const goNext = () => {
+    setActiveIndex((prev) => (prev + 1) % images.length);
+  };
+
   return (
     <div
       className={`project-card${project.featured ? " featured" : ""}`}
@@ -96,8 +201,13 @@ function ProjectCard({ project, index }) {
     >
       {/* Thumbnail */}
       <div className="card-thumb">
-        {project.thumbnail ? (
-          <img src={project.thumbnail} alt={project.title} />
+        {images.length > 0 ? (
+          <img
+            src={images[activeIndex]}
+            alt={`${project.title} ${activeIndex + 1}`}
+            className="card-thumb-image"
+            loading="lazy"
+          />
         ) : (
           <div className="thumb-placeholder">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
@@ -106,6 +216,27 @@ function ProjectCard({ project, index }) {
               <path d="M21 15l-5-5L5 21" />
             </svg>
           </div>
+        )}
+        {hasCarousel && (
+          <>
+            <button type="button" className="carousel-nav prev" onClick={goPrev} aria-label="Previous image">
+              {"<"}
+            </button>
+            <button type="button" className="carousel-nav next" onClick={goNext} aria-label="Next image">
+              {">"}
+            </button>
+            <div className="carousel-dots">
+              {images.map((_, dotIndex) => (
+                <button
+                  key={`${project.id}-dot-${dotIndex}`}
+                  type="button"
+                  className={`carousel-dot${dotIndex === activeIndex ? " active" : ""}`}
+                  aria-label={`Ảnh ${dotIndex + 1}`}
+                  onClick={() => setActiveIndex(dotIndex)}
+                />
+              ))}
+            </div>
+          </>
         )}
         {project.featured && <div className="featured-badge">Featured</div>}
         <div className="card-tag-chip">{project.tag}</div>
@@ -162,12 +293,12 @@ export default function PortfolioGrid() {
     fetch("/api/portfolio.php")
       .then((r) => r.json())
       .then((data) => {
-        setProjects(data);
+        setProjects(attachProjectImages(data));
         setLoading(false);
       })
       .catch(() => {
         // Dùng fallback nếu API chưa có
-        setProjects(FALLBACK_PROJECTS);
+        setProjects(attachProjectImages(FALLBACK_PROJECTS));
         setLoading(false);
       });
   }, []);
@@ -290,13 +421,70 @@ export default function PortfolioGrid() {
           overflow: hidden;
         }
         .project-card.featured .card-thumb { height: 220px; }
-        .card-thumb img { width:100%; height:100%; object-fit:cover; }
+        .card-thumb-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
         .thumb-placeholder {
           width:100%; height:100%;
           display:flex; align-items:center; justify-content:center;
           color: var(--fg2);
           opacity: 0.3;
           background: linear-gradient(135deg, var(--bg2), var(--bg));
+        }
+        .carousel-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 30px;
+          height: 30px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          background: rgba(0, 0, 0, 0.45);
+          color: #fff;
+          font-size: 20px;
+          line-height: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 4;
+          transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .carousel-nav:hover {
+          background: rgba(0, 0, 0, 0.65);
+          transform: translateY(-50%) scale(1.05);
+        }
+        .carousel-nav.prev { left: 10px; }
+        .carousel-nav.next { right: 10px; }
+        .carousel-dots {
+          position: absolute;
+          left: 50%;
+          bottom: 12px;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 6px;
+          z-index: 4;
+          max-width: calc(100% - 90px);
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .carousel-dots::-webkit-scrollbar { display: none; }
+        .carousel-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 999px;
+          border: none;
+          background: rgba(255, 255, 255, 0.45);
+          padding: 0;
+          cursor: pointer;
+          transition: width 0.2s ease, background 0.2s ease;
+        }
+        .carousel-dot.active {
+          width: 16px;
+          background: #fff;
         }
 
         .featured-badge {
@@ -310,6 +498,7 @@ export default function PortfolioGrid() {
           text-transform: uppercase;
           padding: 4px 10px;
           border-radius: 999px;
+          z-index: 5;
         }
         .card-tag-chip {
           position: absolute;
@@ -323,6 +512,7 @@ export default function PortfolioGrid() {
           padding: 4px 10px;
           border-radius: 999px;
           backdrop-filter: blur(4px);
+          z-index: 5;
         }
 
         /* Content */

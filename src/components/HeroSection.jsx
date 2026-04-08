@@ -1,15 +1,51 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 // ============================================================
 // HERO SECTION — Tâm Calisthenics
 // Nhận dark/onToggle từ App để sync dark mode
 // ============================================================
+const HERO_CAROUSEL_AUTOPLAY_MS = 4000;
+const PROFILE_IMAGE_MODULES = import.meta.glob("../../images/profile*.{png,jpg,jpeg,webp,avif,gif,svg}", {
+  eager: true,
+  import: "default",
+});
+
+const PROFILE_IMAGES = Object.entries(PROFILE_IMAGE_MODULES)
+  .sort(([aPath], [bPath]) => {
+    const aName = aPath.split("/").pop() || "";
+    const bName = bPath.split("/").pop() || "";
+    return aName.localeCompare(bName, undefined, { numeric: true, sensitivity: "base" });
+  })
+  .map(([, url]) => url);
 export default function HeroSection({ dark, onToggle }) {
   const [mounted, setMounted] = useState(false);
+  const [avatarIndex, setAvatarIndex] = useState(0);
+  const hasAvatarCarousel = PROFILE_IMAGES.length > 1;
 
   useEffect(() => {
-    setTimeout(() => setMounted(true), 100);
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!hasAvatarCarousel) return undefined;
+
+    const timer = setInterval(() => {
+      setAvatarIndex((prev) => (prev + 1) % PROFILE_IMAGES.length);
+    }, HERO_CAROUSEL_AUTOPLAY_MS);
+
+    return () => clearInterval(timer);
+  }, [hasAvatarCarousel]);
+
+  const goPrevAvatar = () => {
+    if (PROFILE_IMAGES.length === 0) return;
+    setAvatarIndex((prev) => (prev - 1 + PROFILE_IMAGES.length) % PROFILE_IMAGES.length);
+  };
+
+  const goNextAvatar = () => {
+    if (PROFILE_IMAGES.length === 0) return;
+    setAvatarIndex((prev) => (prev + 1) % PROFILE_IMAGES.length);
+  };
 
   return (
     <>
@@ -268,6 +304,54 @@ export default function HeroSection({ dark, onToggle }) {
           width: 100%; height: 100%;
           object-fit: cover;
         }
+        .avatar-carousel-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 30px;
+          height: 30px;
+          border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          background: rgba(0, 0, 0, 0.45);
+          color: #fff;
+          font-size: 16px;
+          line-height: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 4;
+          transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .avatar-carousel-nav:hover {
+          background: rgba(0, 0, 0, 0.65);
+          transform: translateY(-50%) scale(1.05);
+        }
+        .avatar-carousel-nav.prev { left: 10px; }
+        .avatar-carousel-nav.next { right: 10px; }
+        .avatar-carousel-dots {
+          position: absolute;
+          left: 50%;
+          bottom: 12px;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 6px;
+          z-index: 4;
+        }
+        .avatar-carousel-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 999px;
+          border: none;
+          background: rgba(255, 255, 255, 0.45);
+          padding: 0;
+          cursor: pointer;
+          transition: width 0.2s ease, background 0.2s ease;
+        }
+        .avatar-carousel-dot.active {
+          width: 16px;
+          background: #fff;
+        }
         /* Placeholder khi chưa có ảnh */
         .avatar-placeholder {
           width: 100%; height: 100%;
@@ -474,19 +558,41 @@ export default function HeroSection({ dark, onToggle }) {
                 <span className="social-pill-label">Theo dõi mình</span>
               </div>
 
-              {/* Avatar image — thay src bằng ảnh thật của bạn */}
+              {/* Avatar image carousel */}
               <div className="avatar-img-wrap">
-                {/*
-                  ĐỔI THÀNH:
-                  <img src="/images/avatar.jpg" alt="Thanh Tâm" />
-                */}
-                <div className="avatar-placeholder">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                  </svg>
-                  <span>Thêm ảnh của bạn vào đây</span>
-                </div>
+                {PROFILE_IMAGES.length > 0 ? (
+                  <img src={PROFILE_IMAGES[avatarIndex]} alt={`Thanh Tam ${avatarIndex + 1}`} loading="lazy" />
+                ) : (
+                  <div className="avatar-placeholder">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                    </svg>
+                    <span>Thêm ảnh của bạn vào đây</span>
+                  </div>
+                )}
+
+                {hasAvatarCarousel && (
+                  <>
+                    <button type="button" className="avatar-carousel-nav prev" onClick={goPrevAvatar} aria-label="Previous image">
+                      {"<"}
+                    </button>
+                    <button type="button" className="avatar-carousel-nav next" onClick={goNextAvatar} aria-label="Next image">
+                      {">"}
+                    </button>
+                    <div className="avatar-carousel-dots">
+                      {PROFILE_IMAGES.map((_, index) => (
+                        <button
+                          key={`avatar-dot-${index}`}
+                          type="button"
+                          className={`avatar-carousel-dot${index === avatarIndex ? " active" : ""}`}
+                          onClick={() => setAvatarIndex(index)}
+                          aria-label={`Avatar ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Badge */}
