@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     // GitHub Pages project site path (https://<user>.github.io/calisthenics/)
-    base: "/calisthenics/",
+    base: "/",
     plugins: [react()],
     test: {
       environment: "jsdom",
