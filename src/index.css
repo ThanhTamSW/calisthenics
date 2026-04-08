@@ -44,6 +44,8 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 80px;
+  width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -51,7 +53,9 @@ body {
   background: var(--bg);
   color: var(--fg);
   transition: background 0.4s, color 0.4s;
-  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 /* Noise texture toàn trang */
@@ -69,6 +73,9 @@ body::before {
 #root {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 /* Scrollbar custom */
@@ -139,4 +146,15 @@ body::before {
 .scroll-reveal-right.revealed {
   opacity: 1;
   transform: translateX(0);
+}
+
+@media (max-width: 768px) {
+  .scroll-reveal-left,
+  .scroll-reveal-right {
+    transform: translateY(24px);
+  }
+  .scroll-reveal-left.revealed,
+  .scroll-reveal-right.revealed {
+    transform: translateY(0);
+  }
 }

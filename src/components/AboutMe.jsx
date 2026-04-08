@@ -69,7 +69,7 @@ export default function AboutMe() {
 
         .about-section {
           background: var(--bg);
-          padding: 100px 48px;
+          padding: clamp(72px, 8vw, 100px) clamp(16px, 4vw, 48px);
           font-family: 'Inter', sans-serif;
           color: var(--fg);
           transition: background 0.4s, color 0.4s;
@@ -84,7 +84,7 @@ export default function AboutMe() {
         .about-header {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 80px;
+          gap: clamp(28px, 6vw, 80px);
           align-items: center;
           margin-bottom: 80px;
           animation: fadeUp 0.7s 0.1s both;
@@ -206,7 +206,11 @@ export default function AboutMe() {
           padding: 4px;
           margin-bottom: 32px;
           width: fit-content;
+          max-width: 100%;
+          overflow-x: auto;
+          scrollbar-width: none;
         }
+        .tab-list::-webkit-scrollbar { display: none; }
         .tab-btn {
           font-family: 'Inter', sans-serif;
           font-size: 0.82rem;
@@ -218,6 +222,7 @@ export default function AboutMe() {
           background: transparent;
           color: var(--fg2);
           transition: background 0.2s, color 0.2s;
+          white-space: nowrap;
         }
         .tab-btn.active {
           background: var(--accent);
@@ -314,12 +319,48 @@ export default function AboutMe() {
         /* —— RESPONSIVE —— */
         @media (max-width: 860px) {
           .about-section { padding: 72px 24px; }
-          .about-header { grid-template-columns: 1fr; gap: 40px; }
+          .about-header {
+            grid-template-columns: 1fr;
+            gap: 32px;
+            margin-bottom: 48px;
+          }
           .about-cards { grid-template-columns: 1fr 1fr; }
           .skills-grid { grid-template-columns: 1fr; }
         }
-        @media (max-width: 480px) {
-          .about-cards { grid-template-columns: 1fr; }
+        @media (max-width: 640px) {
+          .about-section { padding: 64px 16px; }
+          .about-header {
+            gap: 24px;
+            margin-bottom: 36px;
+          }
+          .about-heading {
+            font-size: clamp(1.9rem, 9vw, 2.6rem);
+            line-height: 1.05;
+            margin-bottom: 14px;
+          }
+          .about-bio { font-size: 0.9rem; line-height: 1.75; }
+          .about-cards {
+            gap: 12px;
+            margin-bottom: 40px;
+          }
+          .about-card { padding: 20px; border-radius: 16px; }
+          .card-icon { font-size: 1.5rem; margin-bottom: 8px; }
+          .card-num { font-size: 1.7rem; }
+          .interests { gap: 8px; margin-top: 20px; }
+          .interest-chip {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+          }
+          .tab-list { padding: 3px; }
+          .tab-btn { padding: 8px 14px; font-size: 0.78rem; }
+          .skills-grid { gap: 14px; }
+          .skill-name { font-size: 0.82rem; }
+        }
+        @media (max-width: 420px) {
+          .about-section { padding: 56px 14px; }
+          .about-cards { grid-template-columns: 1fr; gap: 10px; }
+          .about-header { margin-bottom: 28px; }
+          .tab-btn { padding: 7px 12px; font-size: 0.75rem; }
         }
       `}</style>
 

@@ -52,7 +52,7 @@ export default function Footer() {
         .footer {
           background: var(--bg);
           border-top: 1px solid var(--border);
-          padding: 56px 48px 36px;
+          padding: clamp(44px, 6vw, 56px) clamp(16px, 4vw, 48px) clamp(24px, 4vw, 36px);
           font-family: 'Inter', sans-serif;
           color: var(--fg);
           transition: background 0.4s, color 0.4s;
@@ -92,7 +92,7 @@ export default function Footer() {
 
         .footer-links-group {
           display: flex;
-          gap: 64px;
+          gap: clamp(28px, 6vw, 64px);
         }
         .footer-col-title {
           font-size: 0.72rem;
@@ -188,6 +188,16 @@ export default function Footer() {
           .footer-top { flex-direction: column; gap: 36px; }
           .footer-links-group { gap: 36px; flex-wrap: wrap; }
           .footer-bottom { flex-direction: column; align-items: flex-start; }
+        }
+
+        @media (max-width: 560px) {
+          .footer { padding: 40px 16px 22px; }
+          .footer-top { gap: 28px; margin-bottom: 36px; }
+          .footer-links-group {
+            flex-direction: column;
+            gap: 24px;
+          }
+          .footer-copy { font-size: 0.74rem; }
         }
       `}</style>
 

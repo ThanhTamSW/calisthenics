@@ -94,14 +94,14 @@ export default function HeroSection({ dark, onToggle }) {
           grid-template-columns: 1fr 420px;
           gap: 0;
           align-items: center;
-          padding: 40px 48px 60px;
+          padding: clamp(20px, 4vw, 40px) clamp(16px, 4vw, 48px) clamp(44px, 6vw, 60px);
           max-width: 1280px;
           width: 100%;
           margin: 0 auto;
         }
 
         /* —— LEFT —— */
-        .hero-left { padding-right: 60px; }
+        .hero-left { padding-right: clamp(0px, 5vw, 60px); }
 
         .hero-tag {
           display: inline-flex;
@@ -166,7 +166,7 @@ export default function HeroSection({ dark, onToggle }) {
           font-weight: 300;
           line-height: 1.75;
           color: var(--fg2);
-          max-width: 480px;
+          max-width: 540px;
           margin-bottom: 44px;
           opacity: 0;
           animation: fadeUp 0.7s 0.6s forwards;
@@ -232,6 +232,7 @@ export default function HeroSection({ dark, onToggle }) {
         .stats-row {
           display: flex;
           gap: 36px;
+          flex-wrap: wrap;
           margin-top: 56px;
           padding-top: 36px;
           border-top: 1px solid var(--border);
@@ -460,16 +461,102 @@ export default function HeroSection({ dark, onToggle }) {
           .hero-wrap { padding-top: 68px; }
           .hero-body {
             grid-template-columns: 1fr;
-            padding: 20px 24px 48px;
-            gap: 48px;
+            padding: 20px 20px 48px;
+            gap: 40px;
           }
           .hero-left { padding-right: 0; }
           .hero-right { justify-content: center; }
-          .avatar-card { width: 280px; }
-          .avatar-img-wrap { width: 200px; height: 260px; }
-          .geo-circle-1 { width: 260px; height: 260px; }
-          .geo-circle-2 { width: 200px; height: 200px; }
+          .avatar-card { width: 300px; }
+          .avatar-img-wrap { width: 220px; height: 280px; }
+          .geo-circle-1 { width: 280px; height: 280px; }
+          .geo-circle-2 { width: 220px; height: 220px; }
           .stats-row { gap: 24px; }
+        }
+
+        @media (max-width: 640px) {
+          .hero-body {
+            padding: 16px 16px 40px;
+            gap: 28px;
+          }
+          /* Image card appears FIRST on mobile */
+          .hero-right { order: -1; }
+          .hero-left  { order:  1; }
+          .hero-tag {
+            margin-bottom: 16px;
+            font-size: 0.66rem;
+            letter-spacing: 0.1em;
+          }
+          .hero-h1 {
+            font-size: clamp(2.1rem, 11vw, 3.3rem);
+            line-height: 0.98;
+            margin-bottom: 16px;
+          }
+          .hero-desc {
+            font-size: 0.93rem;
+            line-height: 1.65;
+            margin-bottom: 24px;
+            max-width: 100%;
+          }
+          .hero-ctas { gap: 10px; }
+          .btn-primary,
+          .btn-secondary {
+            width: 100%;
+            justify-content: center;
+            padding: 14px 20px;
+          }
+          .stats-row {
+            margin-top: 28px;
+            padding-top: 20px;
+            gap: 12px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+          .stat-num { font-size: 1.25rem; }
+          .stat-label {
+            font-size: 0.68rem;
+            letter-spacing: 0.02em;
+          }
+          .avatar-card { width: 260px; }
+          .avatar-img-wrap {
+            width: 200px;
+            height: 260px;
+            margin: 32px auto;
+          }
+          .avatar-carousel-nav {
+            width: 28px;
+            height: 28px;
+          }
+          .social-pill {
+            left: 50%;
+            top: -8px;
+            transform: translateX(-50%);
+            padding: 8px 12px;
+          }
+          .avatar-badge {
+            right: 50%;
+            bottom: -8px;
+            transform: translateX(50%);
+            white-space: nowrap;
+          }
+          .marquee-item {
+            padding: 0 20px;
+            font-size: 0.66rem;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .hero-body { padding: 10px 14px 36px; gap: 24px; }
+          .stats-row {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+          }
+          .stat-num { font-size: 1.15rem; }
+          .stat-label { font-size: 0.64rem; }
+          .avatar-card { width: 230px; }
+          .avatar-img-wrap { width: 176px; height: 230px; }
+          .geo-circle-1 { width: 230px; height: 230px; }
+          .geo-circle-2 { width: 180px; height: 180px; }
+          .social-pill-label { display: none; }
         }
       `}</style>
 

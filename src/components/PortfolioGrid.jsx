@@ -89,11 +89,20 @@ const FALLBACK_PROJECTS = [
 ];
 
 const CARD_CAROUSEL_AUTOPLAY_MS = 3500;
+const DEFAULT_PORTFOLIO_API_URL = "/api/portfolio.php";
+const PORTFOLIO_API_URL = import.meta.env.VITE_PORTFOLIO_API_URL || DEFAULT_PORTFOLIO_API_URL;
 
-const RAW_IMAGE_MODULES = import.meta.glob("../../images/premium1*.{png,jpg,jpeg,webp,avif,gif,svg}", {
-  eager: true,
-  import: "default",
-});
+const RAW_IMAGE_MODULES = import.meta.glob(
+  "../../images/*.{png,jpg,jpeg,webp,avif,gif,svg}",
+  {
+    eager: true,
+    import: "default",
+  }
+);
+
+function normalizeGroupKey(value) {
+  return (value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
 
 function normalizeText(value) {
   return (value || "")
@@ -111,7 +120,7 @@ function buildImageGroups(modules) {
     const fileName = path.split("/").pop() || "";
     const baseName = fileName.replace(/\.[^.]+$/, "").toLowerCase();
     const suffixMatch = baseName.match(/_(\d+)$/);
-    const key = baseName.replace(/_(\d+)$/, "");
+    const key = normalizeGroupKey(baseName.replace(/_(\d+)$/, ""));
     const order = suffixMatch ? Number.parseInt(suffixMatch[1], 10) : 0;
 
     if (!groups[key]) groups[key] = [];
@@ -135,30 +144,94 @@ const TITLE_IMAGE_RULES = [
   {
     key: "premium1",
     match: (title) => title.includes("top 1 premium battle"),
+    thumbnailPosition: "center 28%",
+    thumbnailPositions: ["center 38%", "center 24%"],
+    thumbnailScales: [0.9, 1],
+    thumbnailFit: "cover",
+  },
+  {
+    key: "giamkhao",
+    match: (title, project) =>
+      Number(project?.id) === 5 ||
+      (title.includes("giam") && title.includes("battle of team i")),
+    thumbnailPosition: "center 26%",
+    thumbnailFit: "cover",
+  },
+  {
+    key: "ultimatebattlez2024",
+    keys: ["ultimatebattlez", "ultimatez2024", "ultimatez", "ubz2024", "ubz"],
+    match: (title, project) =>
+      Number(project?.id) === 7 ||
+      (title.includes("ultimate") && title.includes("battle") && title.includes("z")),
+    thumbnailPosition: "center 28%",
+    thumbnailFit: "cover",
   },
 ];
 
-function resolveProjectImages(project) {
+function resolveImagesFromRule(rule, fallbackImages) {
+  const candidateKeys = [rule.key, ...(Array.isArray(rule.keys) ? rule.keys : [])]
+    .map((key) => normalizeGroupKey(key))
+    .filter(Boolean);
+
+  const merged = [];
+  const seen = new Set();
+
+  candidateKeys.forEach((key) => {
+    (IMAGE_GROUPS[key] || []).forEach((url) => {
+      if (seen.has(url)) return;
+      seen.add(url);
+      merged.push(url);
+    });
+  });
+
+  return merged.length > 0 ? merged : fallbackImages;
+}
+
+function resolveProjectMedia(project) {
   const normalizedTitle = normalizeText(project.title);
-  const rule = TITLE_IMAGE_RULES.find((item) => item.match(normalizedTitle));
+  const rule = TITLE_IMAGE_RULES.find((item) => item.match(normalizedTitle, project));
+  const fallbackImages = project.thumbnail ? [project.thumbnail] : [];
 
   if (!rule) {
-    return project.thumbnail ? [project.thumbnail] : [];
+    return {
+      images: fallbackImages,
+      thumbnailPosition: project.thumbnailPosition || "",
+      thumbnailPositions: Array.isArray(project.thumbnailPositions) ? project.thumbnailPositions : [],
+      thumbnailScales: Array.isArray(project.thumbnailScales) ? project.thumbnailScales : [],
+      thumbnailFit: project.thumbnailFit || "",
+    };
   }
 
-  const images = IMAGE_GROUPS[rule.key] || [];
-  if (images.length > 0) return images;
-  return project.thumbnail ? [project.thumbnail] : [];
+  const images = resolveImagesFromRule(rule, fallbackImages);
+  return {
+    images,
+    thumbnailPosition: project.thumbnailPosition || rule.thumbnailPosition || "",
+    thumbnailPositions: Array.isArray(project.thumbnailPositions) && project.thumbnailPositions.length > 0
+      ? project.thumbnailPositions
+      : Array.isArray(rule.thumbnailPositions)
+        ? rule.thumbnailPositions
+        : [],
+    thumbnailScales: Array.isArray(project.thumbnailScales) && project.thumbnailScales.length > 0
+      ? project.thumbnailScales
+      : Array.isArray(rule.thumbnailScales)
+        ? rule.thumbnailScales
+        : [],
+    thumbnailFit: project.thumbnailFit || rule.thumbnailFit || "",
+  };
 }
 
 function attachProjectImages(list) {
   if (!Array.isArray(list)) return [];
   return list.map((project) => {
-    const images = resolveProjectImages(project);
+    const { images, thumbnailPosition, thumbnailPositions, thumbnailScales, thumbnailFit } = resolveProjectMedia(project);
     return {
       ...project,
       images,
       thumbnail: project.thumbnail || images[0] || "",
+      thumbnailPosition,
+      thumbnailPositions,
+      thumbnailScales,
+      thumbnailFit,
     };
   });
 }
@@ -171,6 +244,23 @@ function ProjectCard({ project, index }) {
       ? [project.thumbnail]
       : [];
   const hasCarousel = images.length > 1;
+  const useContainFit = project.thumbnailFit === "contain";
+  const currentImage = images[activeIndex];
+  const activePosition = Array.isArray(project.thumbnailPositions) && project.thumbnailPositions[activeIndex]
+    ? project.thumbnailPositions[activeIndex]
+    : project.thumbnailPosition;
+  const activeScale = Array.isArray(project.thumbnailScales) && project.thumbnailScales[activeIndex]
+    ? project.thumbnailScales[activeIndex]
+    : 1;
+  const useCoverBackdrop = !useContainFit && activeScale < 0.999 && Boolean(currentImage);
+  const thumbStyle = useCoverBackdrop
+    ? {
+      backgroundImage: `url(${currentImage})`,
+      backgroundSize: "cover",
+      backgroundPosition: activePosition || "center center",
+      backgroundRepeat: "no-repeat",
+    }
+    : undefined;
 
   useEffect(() => {
     setActiveIndex(0);
@@ -200,14 +290,30 @@ function ProjectCard({ project, index }) {
       style={{ animationDelay: `${index * 0.08}s` }}
     >
       {/* Thumbnail */}
-      <div className="card-thumb">
+      <div className={`card-thumb${useContainFit ? " contain-fit" : ""}`} style={thumbStyle}>
         {images.length > 0 ? (
-          <img
-            src={images[activeIndex]}
-            alt={`${project.title} ${activeIndex + 1}`}
-            className="card-thumb-image"
-            loading="lazy"
-          />
+          <>
+            {useContainFit && (
+              <img
+                src={currentImage}
+                alt=""
+                aria-hidden="true"
+                className="card-thumb-backdrop"
+                loading="lazy"
+              />
+            )}
+            <img
+              src={currentImage}
+              alt={`${project.title} ${activeIndex + 1}`}
+              className="card-thumb-image"
+              loading="lazy"
+              style={{
+                ...(activePosition ? { objectPosition: activePosition } : {}),
+                ...(project.thumbnailFit ? { objectFit: project.thumbnailFit } : {}),
+                ...(activeScale !== 1 ? { transform: `scale(${activeScale})`, transformOrigin: "center center" } : {}),
+              }}
+            />
+          </>
         ) : (
           <div className="thumb-placeholder">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
@@ -290,17 +396,48 @@ export default function PortfolioGrid() {
   const gridRef = useScrollReveal();
 
   useEffect(() => {
-    fetch("/api/portfolio.php")
-      .then((r) => r.json())
-      .then((data) => {
-        setProjects(attachProjectImages(data));
-        setLoading(false);
+    const shouldUseFallbackInDev =
+      import.meta.env.DEV &&
+      !import.meta.env.VITE_PORTFOLIO_API_URL &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+    if (shouldUseFallbackInDev) {
+      setProjects(attachProjectImages(FALLBACK_PROJECTS));
+      setLoading(false);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    let cancelled = false;
+
+    fetch(PORTFOLIO_API_URL, {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`Portfolio API ${r.status}`);
+        return r.json();
       })
-      .catch(() => {
-        // Dùng fallback nếu API chưa có
+      .then((data) => {
+        if (cancelled) return;
+        const safeData = Array.isArray(data) ? data : FALLBACK_PROJECTS;
+        setProjects(attachProjectImages(safeData));
+      })
+      .catch((error) => {
+        if (cancelled || error?.name === "AbortError") return;
+        if (import.meta.env.DEV) {
+          console.info("[PortfolioGrid] fallback projects:", error?.message || error);
+        }
         setProjects(attachProjectImages(FALLBACK_PROJECTS));
-        setLoading(false);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
   }, []);
 
   const filtered =
@@ -323,12 +460,18 @@ export default function PortfolioGrid() {
 
         .portfolio-section {
           background: var(--bg2);
-          padding: 100px 48px;
+          padding: clamp(72px, 8vw, 100px) clamp(16px, 4vw, 48px);
+          overflow-x: clip;
           font-family: 'Inter', sans-serif;
           color: var(--fg);
           transition: background 0.4s, color 0.4s;
         }
-        .portfolio-inner { max-width: 1100px; margin: 0 auto; }
+        .portfolio-inner {
+          max-width: 1100px;
+          width: 100%;
+          min-width: 0;
+          margin: 0 auto;
+        }
 
         .portfolio-top {
           display: flex;
@@ -394,6 +537,7 @@ export default function PortfolioGrid() {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 20px;
+          min-width: 0;
         }
 
         /* Card */
@@ -402,6 +546,7 @@ export default function PortfolioGrid() {
           border: 1px solid var(--border);
           border-radius: 20px;
           overflow: hidden;
+          min-width: 0;
           transition: border-color 0.2s, transform 0.25s, box-shadow 0.25s;
           animation: fadeUp 0.5s both;
           backdrop-filter: blur(8px);
@@ -420,12 +565,34 @@ export default function PortfolioGrid() {
           background: var(--bg2);
           overflow: hidden;
         }
+        .card-thumb.contain-fit::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.06));
+          z-index: 1;
+          pointer-events: none;
+        }
         .project-card.featured .card-thumb { height: 220px; }
+        .card-thumb-backdrop {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          filter: blur(22px) brightness(0.72);
+          transform: scale(1.14);
+          opacity: 0.95;
+          z-index: 0;
+        }
         .card-thumb-image {
+          position: relative;
+          z-index: 2;
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
+          transition: transform 0.35s ease;
         }
         .thumb-placeholder {
           width:100%; height:100%;
@@ -513,10 +680,17 @@ export default function PortfolioGrid() {
           border-radius: 999px;
           backdrop-filter: blur(4px);
           z-index: 5;
+          max-width: calc(100% - 24px);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         /* Content */
-        .card-content { padding: 24px; }
+        .card-content {
+          min-width: 0;
+          padding: clamp(18px, 2vw, 24px);
+        }
         .card-title {
           font-family: 'Space Grotesk', sans-serif;
           font-size: 1rem;
@@ -531,6 +705,7 @@ export default function PortfolioGrid() {
           color: var(--fg2);
           line-height: 1.65;
           margin-bottom: 16px;
+          overflow-wrap: anywhere;
         }
         .card-tech {
           display: flex;
@@ -547,7 +722,11 @@ export default function PortfolioGrid() {
           border-radius: 6px;
           padding: 3px 8px;
         }
-        .card-links { display:flex; gap:8px; }
+        .card-links {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
         .link-btn {
           display: inline-flex;
           align-items: center;
@@ -599,15 +778,59 @@ export default function PortfolioGrid() {
           margin-bottom: 10px;
         }
 
-        @media (max-width: 860px) {
+        @media (max-width: 900px) {
           .portfolio-section { padding: 72px 24px; }
-          .projects-grid { grid-template-columns: 1fr 1fr; }
+          .portfolio-top {
+            margin-bottom: 28px;
+            align-items: flex-start;
+          }
+          .portfolio-heading { font-size: clamp(1.8rem, 4vw, 2.4rem); }
+          .projects-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+          /* On tablet 2-col, featured cards span full width */
           .project-card.featured { grid-column: span 2; }
+          .project-card.featured .card-thumb { height: 240px; }
         }
-        @media (max-width: 560px) {
+
+        @media (max-width: 740px) {
+          .filter-tags {
+            flex-wrap: wrap;
+            overflow: visible;
+            padding-bottom: 0;
+          }
+          .filter-tag {
+            white-space: normal;
+            flex: 0 1 auto;
+          }
           .projects-grid { grid-template-columns: 1fr; }
           .project-card.featured { grid-column: span 1; }
+          .project-card.featured .card-thumb { height: 200px; }
         }
+
+        @media (max-width: 560px) {
+          .portfolio-section { padding: 64px 16px; }
+          .card-thumb { height: 170px; }
+          .project-card.featured .card-thumb { height: 190px; }
+          .carousel-nav {
+            width: 28px;
+            height: 28px;
+            font-size: 16px;
+          }
+          .featured-badge,
+          .card-tag-chip {
+            font-size: 0.62rem;
+            padding: 4px 8px;
+          }
+          .card-tag-chip { right: 8px; bottom: 8px; }
+          .card-title { font-size: 0.94rem; }
+          .card-desc { font-size: 0.8rem; }
+          .link-btn { font-size: 0.75rem; padding: 7px 12px; }
+        }
+
+        @media (max-width: 400px) {
+          .card-thumb { height: 156px; }
+          .project-card.featured .card-thumb { height: 176px; }
+        }
+
       `}</style>
 
       <section className="portfolio-section" id="portfolio">
@@ -662,4 +885,5 @@ export default function PortfolioGrid() {
     </>
   );
 }
+
 

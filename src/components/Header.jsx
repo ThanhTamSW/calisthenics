@@ -35,6 +35,30 @@ export default function Header({ dark, onToggle }) {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth > 768) setMenuOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
   const handleNavClick = () => setMenuOpen(false);
 
   return (
@@ -54,7 +78,7 @@ export default function Header({ dark, onToggle }) {
           position: fixed;
           top: 0; left: 0; right: 0;
           z-index: 100;
-          padding: 0 48px;
+          padding: 0 clamp(16px, 4vw, 48px);
           height: 68px;
           display: flex;
           align-items: center;
@@ -121,7 +145,7 @@ export default function Header({ dark, onToggle }) {
         .header-actions {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: clamp(8px, 1.6vw, 12px);
         }
 
         .toggle-btn {
@@ -187,7 +211,6 @@ export default function Header({ dark, onToggle }) {
         .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4.5px, -4.5px); }
 
         .mobile-menu {
-          display: none;
           position: fixed;
           top: 68px; left: 12px; right: 12px;
           background: color-mix(in srgb, var(--bg) 95%, transparent);
@@ -197,9 +220,35 @@ export default function Header({ dark, onToggle }) {
           padding: 20px;
           z-index: 99;
           box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+          max-height: calc(100dvh - 84px);
+          overflow-y: auto;
+          opacity: 0;
+          pointer-events: none;
+          transform: translateY(-8px) scale(0.98);
+          transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .mobile-menu.open {
+          opacity: 1;
+          pointer-events: auto;
+          transform: translateY(0) scale(1);
           animation: menuOpen 0.25s ease;
         }
-        .mobile-menu.open { display: block; }
+
+        .mobile-backdrop {
+          display: none;
+          position: fixed;
+          inset: 68px 0 0;
+          border: 0;
+          background: rgba(0, 0, 0, 0.35);
+          z-index: 98;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+        }
+        .mobile-backdrop.open {
+          opacity: 1;
+          pointer-events: auto;
+        }
 
         .mobile-nav-links {
           display: flex;
@@ -236,14 +285,22 @@ export default function Header({ dark, onToggle }) {
         }
 
         @media (max-width: 768px) {
-          .header { padding: 0 20px; }
+          .header { padding: 0 16px; }
+          .header-logo { font-size: 1.5rem; }
           .header-nav, .header-cta { display: none; }
           .hamburger { display: flex; }
+          .mobile-menu, .mobile-backdrop { display: block; }
+        }
+
+        @media (max-width: 420px) {
+          .header { height: 64px; }
+          .mobile-menu { top: 64px; left: 8px; right: 8px; }
+          .mobile-backdrop { inset: 64px 0 0; }
         }
       `}</style>
 
       <header className={`header${scrolled ? " scrolled" : ""}`}>
-        <a href="/" className="header-logo">
+        <a href="/" className="header-logo" onClick={handleNavClick}>
           Tâm<span className="header-logo-dot">.</span>
         </a>
 
@@ -265,23 +322,33 @@ export default function Header({ dark, onToggle }) {
             onClick={onToggle}
             aria-label="Toggle dark mode"
           />
-          <a href="#contact" className="header-cta">
+          <a href="#contact" className="header-cta" onClick={handleNavClick}>
             Liên hệ
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </a>
           <button
+            type="button"
             className={`hamburger${menuOpen ? " open" : ""}`}
             onClick={() => setMenuOpen((open) => !open)}
             aria-label="Menu"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
           >
             <span /><span /><span />
           </button>
         </div>
       </header>
 
-      <div className={`mobile-menu${menuOpen ? " open" : ""}`}>
+      <button
+        type="button"
+        className={`mobile-backdrop${menuOpen ? " open" : ""}`}
+        aria-label="Đóng menu"
+        onClick={handleNavClick}
+      />
+
+      <div id="mobile-menu" className={`mobile-menu${menuOpen ? " open" : ""}`}>
         <div className="mobile-nav-links">
           {NAV_LINKS.map((link) => (
             <a

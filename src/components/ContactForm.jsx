@@ -222,7 +222,8 @@ export default function ContactForm() {
         /* SECTION */
         .contact-section {
           background: var(--bg);
-          padding: 100px 48px;
+          padding: clamp(72px, 8vw, 100px) clamp(16px, 4vw, 48px);
+          overflow-x: clip;
           font-family: 'Inter', sans-serif;
           color: var(--fg);
           transition: background 0.4s, color 0.4s;
@@ -230,12 +231,15 @@ export default function ContactForm() {
 
         .contact-inner {
           max-width: 1100px;
+          width: 100%;
+          min-width: 0;
           margin: 0 auto;
           display: grid;
           grid-template-columns: 1fr 1.3fr;
-          gap: 80px;
+          gap: clamp(28px, 7vw, 80px);
           align-items: start;
         }
+        .contact-inner > * { min-width: 0; }
 
         /* LEFT INFO */
         .contact-info {
@@ -277,7 +281,7 @@ export default function ContactForm() {
           font-weight: 300;
           line-height: 1.8;
           color: var(--fg2);
-          max-width: 340px;
+          max-width: 380px;
           margin-bottom: 48px;
         }
 
@@ -300,6 +304,8 @@ export default function ContactForm() {
           color: var(--fg);
           transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
           backdrop-filter: blur(8px);
+          min-width: 0;
+          overflow: hidden;
         }
         .social-card:hover {
           border-color: var(--accent);
@@ -319,6 +325,10 @@ export default function ContactForm() {
           background: var(--accent);
           color: #fff;
         }
+        .social-text {
+          min-width: 0;
+          flex: 1 1 auto;
+        }
         .social-label {
           font-size: 0.72rem;
           font-weight: 500;
@@ -331,6 +341,8 @@ export default function ContactForm() {
           font-size: 0.88rem;
           font-weight: 500;
           color: var(--fg);
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
         .social-arrow {
           margin-left: auto;
@@ -347,6 +359,7 @@ export default function ContactForm() {
         /* RIGHT FORM */
         .contact-form-wrap {
           animation: fadeUp 0.7s 0.25s both;
+          min-width: 0;
         }
 
         .form-card {
@@ -356,12 +369,16 @@ export default function ContactForm() {
           padding: 40px;
           backdrop-filter: blur(12px);
           box-shadow: var(--shadow);
+          width: 100%;
+          min-width: 0;
         }
+        .form-card form { width: 100%; min-width: 0; }
 
         .form-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 16px;
+          min-width: 0;
         }
 
         .field-group { margin-bottom: 20px; }
@@ -391,6 +408,7 @@ export default function ContactForm() {
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
           resize: none;
+          min-width: 0;
         }
         .field-input::placeholder,
         .field-textarea::placeholder { color: var(--fg2); opacity: 0.5; }
@@ -565,6 +583,61 @@ export default function ContactForm() {
           .contact-sub { max-width: 100%; }
           .form-row { grid-template-columns: 1fr; }
           .form-card { padding: 28px 20px; }
+        }
+
+        @media (max-width: 560px) {
+          .contact-section { padding: 64px 16px; }
+          .contact-heading { line-height: 1.05; margin-bottom: 14px; }
+          .contact-sub {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            margin-bottom: 32px;
+          }
+          .social-list { gap: 10px; }
+          .social-card {
+            padding: 14px 14px;
+            border-radius: 14px;
+            gap: 10px;
+          }
+          .social-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+          }
+          .social-label { font-size: 0.68rem; }
+          .social-handle {
+            font-size: 0.8rem;
+            overflow-wrap: anywhere;
+          }
+          .form-card {
+            padding: 20px 14px;
+            border-radius: 18px;
+          }
+          .field-input,
+          .field-textarea {
+            padding: 12px 13px;
+            font-size: 16px;
+          }
+          .submit-btn {
+            padding: 14px 24px;
+            border-radius: 12px;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .contact-section { padding: 56px 12px; }
+          .contact-inner { gap: 36px; }
+          .social-card {
+            align-items: flex-start;
+            padding: 12px;
+          }
+          .form-card {
+            padding: 16px 12px;
+            border-radius: 16px;
+          }
+          .social-arrow { display: none; }
+          .field-label { font-size: 0.7rem; }
+          .char-count { font-size: 0.68rem; }
         }
       `}</style>
 
