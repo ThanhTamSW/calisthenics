@@ -12,7 +12,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 1,
     title: "Top 1 Premium Battle",
-    description: "Đạt giải Top 1 tại Premium Battle. Một trong những thành tích đáng tự hào nhất trong hành trình calisthenics.",
+    description: "Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam. Giải đấu nổi bật với bảng thi đấu hấp dẫn cùng hệ thống huy chương dành cho những vận động viên xuất sắc nhất.",
     tech: ["Top 1", "Champion", "Battle"],
     tag: "Thành tích",
     demo: "",
@@ -23,7 +23,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 2,
     title: "SOUTHERN STREET WORKOUT BATTLE 2023",
-    description: "Tham gia giải đấu street workout khu vực miền Nam. Trải nghiệm thi đấu chuyên nghiệp đầu tiên.",
+    description: "Sau thời gian dài ấp ủ, SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh. Southern Street Workout ra đời với sứ mệnh tổ chức các giải đấu và sự kiện Street Workout tại khu vực miền Nam Việt Nam. Với sự đồng hành từ Ashura, Sept Strength Club, shop Hoàng Kỳ Tống và VNSWC, giải đấu trở thành tiền đề để lan tỏa đam mê Street Workout, tinh thần tập luyện và rèn luyện sức khỏe tới cộng đồng.",
     tech: ["Street Workout", "Battle", "2023"],
     tag: "Giải đấu",
     demo: "",
@@ -34,7 +34,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 3,
     title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
-    description: "Tham gia giải vô địch Street Workout Việt Nam 2023. Sân chơi lớn nhất cho cộng đồng calisthenics cả nước.",
+    description: "Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam. Giải đấu hướng tới thúc đẩy phong trào Calisthenics - Street Workout, kết nối cộng đồng và lan tỏa tinh thần vượt giới hạn tại Việt Nam.",
     tech: ["Quoc gia", "Championship", "2023"],
     tag: "Giải đấu",
     demo: "",
@@ -45,7 +45,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 4,
     title: "PREMIUM BATTLE II",
-    description: "Tiếp tục tham gia Premium Battle lần II. Thử thách bản thân ở đấu trường quen thuộc.",
+    description: "Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam. Giải đấu quy tụ nhiều tài năng nổi bật với những màn trình diễn đầy ấn tượng, sức mạnh và kỹ thuật. Mục tiêu của giải là tìm ra đại diện Việt Nam tham dự Xia-Long Cup Asia Street Workout Championship tại Đài Loan và có thể là giải SWUB.",
     tech: ["Battle", "Premium", "Comeback"],
     tag: "Giải đấu",
     demo: "",

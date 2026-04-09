@@ -650,7 +650,21 @@ export default function HeroSection({ dark, onToggle }) {
         <div className="marquee-wrap">
           <div className="marquee-track">
             {[...Array(2)].map((_, i) =>
-              ["Calisthenics", "Street Workout", "Muscle Up", "Handstand", "Front Lever", "Planche", "Comeback"].map((item, j) => (
+              [
+                "CALISTHENICS",
+                "HANSTAND",
+                "PLANCHE",
+                "MALTESE",
+                "HEFESTO",
+                "FRONT LEVER",
+                "BACK LEVER",
+                "MUSCLE UP",
+                "SWING 360",
+                "SWING 540",
+                "ALLEY HOOP",
+                "SUPRA 540",
+                "DRAGON 360",
+              ].map((item, j) => (
                 <div className="marquee-item" key={`${i}-${j}`}>
                   <span className="marquee-dot" />
                   {item}
@@ -666,7 +680,7 @@ export default function HeroSection({ dark, onToggle }) {
           {/* LEFT */}
           <div className="hero-left">
 
-            <div className="hero-tag">Liên hệ - Huấn luyện - Chia sẻ</div>
+            <div className="hero-tag">CALISTHENICS - HÀNH TRÌNH - KỶ LUẬT</div>
 
             <h1 className="hero-h1">
               Strength.<br />

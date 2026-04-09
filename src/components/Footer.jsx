@@ -39,7 +39,7 @@ const SOCIAL = [
 
 const LINKS = [
   { label: "Về mình", href: "#about" },
-  { label: "Hành trình", href: "#about" },
+  { label: "Hành trình", href: "#journey" },
   { label: "Liên hệ", href: "#contact" },
 ];
 
@@ -222,7 +222,7 @@ export default function Footer() {
                 <div className="footer-col-title">Trang</div>
                 <div className="footer-col-links">
                   {LINKS.map((l) => (
-                    <a key={l.href} href={l.href} className="footer-col-link">{l.label}</a>
+                    <a key={`${l.label}-${l.href}`} href={l.href} className="footer-col-link">{l.label}</a>
                   ))}
                 </div>
               </div>

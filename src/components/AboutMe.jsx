@@ -16,7 +16,7 @@ const TIMELINE = [
     accent: true,
     cardTag: "Giải đấu",
     chips: ["Battle Of Team", "Street Workout", "2025"],
-    imageKeys: [],
+    imageKeys: ["BOT_II"],
   },
   {
     year: "31/12/2024",
@@ -30,11 +30,11 @@ const TIMELINE = [
   {
     year: "27/04/2024",
     title: "PREMIUM BATTLE II",
-    desc: "Tiếp tục thi đấu tại Premium Battle II để tích lũy thêm kinh nghiệm sàn đấu.",
+    desc: "Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam. Giải đấu quy tụ nhiều tài năng nổi bật với những màn trình diễn đầy ấn tượng, sức mạnh và kỹ thuật. Mục tiêu của giải là tìm ra đại diện Việt Nam tham dự Xia-Long Cup Asia Street Workout Championship tại Đài Loan và có thể là giải SWUB.",
     accent: false,
     cardTag: "Giải đấu",
     chips: ["Premium", "Battle", "2024"],
-    imageKeys: ["premium1_2"],
+    imageKeys: ["premium2_1", "premium2_2", "premium2_3"],
   },
   {
     year: "21/01/2024",
@@ -48,29 +48,29 @@ const TIMELINE = [
   {
     year: "09/12/2023",
     title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
-    desc: "Tham gia giải vô địch Street Workout Việt Nam 2023 cùng cộng đồng vận động viên cả nước.",
+    desc: "Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam. Giải đấu hướng tới thúc đẩy phong trào Calisthenics - Street Workout, kết nối cộng đồng và lan tỏa tinh thần vượt giới hạn tại Việt Nam.",
     accent: false,
     cardTag: "Giải đấu",
     chips: ["Championship", "Street Workout", "2023"],
-    imageKeys: [],
+    imageKeys: ["championship_1"],
   },
   {
     year: "20/08/2023",
     title: "PREMIUM BATTLE I",
-    desc: "Đạt hạng Top 1 tại Premium Battle I - một trong những thành tích nổi bật nhất.",
+    desc: "Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam. Giải đấu nổi bật với bảng thi đấu hấp dẫn cùng hệ thống huy chương dành cho những vận động viên xuất sắc nhất.",
     accent: false,
     cardTag: "Thành tích",
     chips: ["Top 1", "Champion", "Battle"],
-    imageKeys: ["premium1_1"],
+    imageKeys: ["premium1_1", "premium1_2", "premium1_3", "premium1_4", "premium1_5"],
   },
   {
     year: "15/07/2023",
     title: "SOUTHERN STREET WORKOUT BATTLE 2023",
-    desc: "Giải đấu street workout khu vực miền Nam, tạo nền tảng thi đấu chuyên nghiệp ban đầu.",
+    desc: "Sau thời gian dài ấp ủ, SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh. Southern Street Workout ra đời với sứ mệnh tổ chức các giải đấu và sự kiện Street Workout tại khu vực miền Nam Việt Nam. Với sự đồng hành từ Ashura, Sept Strength Club, shop Hoàng Kỳ Tống và VNSWC, giải đấu trở thành tiền đề để lan tỏa đam mê Street Workout, tinh thần tập luyện và rèn luyện sức khỏe tới cộng đồng.",
     accent: false,
     cardTag: "Giải đấu",
     chips: ["Street Workout", "Battle", "2023"],
-    imageKeys: [],
+    imageKeys: ["southern_1"],
   },
   {
     year: "2020",
@@ -104,9 +104,29 @@ const TIMELINE_IMAGE_LOOKUP = Object.entries(TIMELINE_IMAGE_MODULES).reduce((acc
   return acc;
 }, {});
 
+const TIMELINE_IMAGE_FOCUS = {
+  premium1_1: "center 40%",
+  premium1_3: "center 42%",
+  premium1_4: "center 74%",
+  premium1_5: "center 38%",
+  premium2_1: "center 38%",
+  premium2_2: "center 44%",
+  premium2_3: "center 42%",
+  championship_1: "center 44%",
+  southern_1: "center 38%",
+  BOT_II: "center 22%",
+};
+
 function resolveTimelineImages(imageKeys = []) {
   return imageKeys
-    .map((key) => TIMELINE_IMAGE_LOOKUP[key] || "")
+    .map((key) => {
+      const src = TIMELINE_IMAGE_LOOKUP[key] || "";
+      if (!src) return null;
+      return {
+        src,
+        position: TIMELINE_IMAGE_FOCUS[key] || "center center",
+      };
+    })
     .filter(Boolean);
 }
 
@@ -161,17 +181,19 @@ function TimelineMediaCarousel({ images, title }) {
     <>
       {previousIndex !== null && images[previousIndex] ? (
         <img
-          src={images[previousIndex]}
+          src={images[previousIndex].src}
           alt=""
           aria-hidden="true"
           className="timeline-project-image previous"
+          style={{ objectPosition: images[previousIndex].position }}
           loading="lazy"
         />
       ) : null}
       <img
-        src={images[activeIndex]}
+        src={images[activeIndex].src}
         alt={title}
         className="timeline-project-image active"
+        style={{ objectPosition: images[activeIndex].position }}
         loading="lazy"
       />
       {images.length > 1 && (
@@ -489,6 +511,8 @@ export default function AboutMe() {
         }
         .timeline-project-card {
           margin-top: 14px;
+          width: 100%;
+          max-width: 860px;
           background: var(--card);
           border: 1px solid var(--border);
           border-radius: 16px;
@@ -501,7 +525,7 @@ export default function AboutMe() {
         }
         .timeline-project-thumb {
           position: relative;
-          height: 170px;
+          height: clamp(250px, 32vw, 360px);
           background: linear-gradient(135deg, var(--bg2), var(--bg));
           overflow: hidden;
           transform: translateZ(0);
@@ -512,6 +536,7 @@ export default function AboutMe() {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center 32%;
           display: block;
           backface-visibility: hidden;
         }
@@ -636,7 +661,7 @@ export default function AboutMe() {
           }
           .tab-list { padding: 3px; }
           .tab-btn { padding: 8px 14px; font-size: 0.78rem; }
-          .timeline-project-thumb { height: 150px; }
+          .timeline-project-thumb { height: 180px; }
           .timeline-project-body { padding: 12px; }
           .timeline-project-title { font-size: 0.88rem; }
           .timeline-project-desc { font-size: 0.78rem; }
@@ -703,7 +728,7 @@ export default function AboutMe() {
           </div>
 
           {/* TABS */}
-          <div ref={tabsRef} className="tabs-wrap scroll-reveal">
+          <div ref={tabsRef} className="tabs-wrap scroll-reveal" id="journey">
             <div className="tab-list">
               <button className="tab-btn active">Hành trình</button>
             </div>
@@ -724,7 +749,6 @@ export default function AboutMe() {
                     </button>
 
                     <div className={`timeline-panel${isOpen ? " open" : ""}`}>
-                      <div className="timeline-desc">{t.desc}</div>
                       <div className="timeline-project-card">
                         <div className="timeline-project-thumb">
                           <TimelineMediaCarousel images={images} title={t.title} />

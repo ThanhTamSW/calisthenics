@@ -2,7 +2,7 @@
 
 const NAV_LINKS = [
   { label: "Về mình", href: "#about" },
-  { label: "Hành trình", href: "#about" },
+  { label: "Hành trình", href: "#journey" },
   { label: "Liên hệ", href: "#contact" },
 ];
 
@@ -18,21 +18,68 @@ export default function Header({ dark, onToggle }) {
   }, []);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveSection(entry.target.id);
+    const sectionIds = NAV_LINKS.map((link) => link.href.replace("#", ""));
+    const HEADER_OFFSET = 92;
+
+    const getSections = () =>
+      sectionIds
+        .map((id) => document.getElementById(id))
+        .filter(Boolean)
+        .sort((a, b) => {
+          const aTop = a.getBoundingClientRect().top + window.scrollY;
+          const bTop = b.getBoundingClientRect().top + window.scrollY;
+          return aTop - bTop;
         });
-      },
-      { threshold: 0.4 }
-    );
 
-    ["about", "contact"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) observer.observe(el);
-    });
+    let sections = getSections();
 
-    return () => observer.disconnect();
+    const syncActiveSection = () => {
+      if (sections.length === 0) {
+        sections = getSections();
+        if (sections.length === 0) return;
+      }
+
+      const scrollY = window.scrollY;
+      let current = sections[0].id;
+
+      for (let index = 0; index < sections.length; index += 1) {
+        const section = sections[index];
+        const sectionTop = section.getBoundingClientRect().top + window.scrollY;
+        const sectionStart = sectionTop - HEADER_OFFSET;
+        const nextSection = sections[index + 1];
+        const nextSectionTop = nextSection
+          ? nextSection.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET
+          : Number.POSITIVE_INFINITY;
+
+        if (scrollY >= sectionStart && scrollY < nextSectionTop) {
+          current = section.id;
+          break;
+        }
+      }
+
+      setActiveSection((prev) => (prev === current ? prev : current));
+    };
+
+    const syncFromHash = () => {
+      const hashId = window.location.hash.replace("#", "");
+      if (sectionIds.includes(hashId)) {
+        setActiveSection((prev) => (prev === hashId ? prev : hashId));
+        return;
+      }
+      syncActiveSection();
+    };
+
+    syncActiveSection();
+    syncFromHash();
+    window.addEventListener("scroll", syncActiveSection, { passive: true });
+    window.addEventListener("resize", syncActiveSection);
+    window.addEventListener("hashchange", syncFromHash);
+
+    return () => {
+      window.removeEventListener("scroll", syncActiveSection);
+      window.removeEventListener("resize", syncActiveSection);
+      window.removeEventListener("hashchange", syncFromHash);
+    };
   }, []);
 
   useEffect(() => {
@@ -131,15 +178,9 @@ export default function Header({ dark, onToggle }) {
           transition: color 0.2s, background 0.2s;
         }
         .nav-link:hover { color: var(--fg); background: var(--bg2); }
-        .nav-link.active { color: var(--accent); }
-        .nav-link.active::after {
-          content: '';
-          position: absolute;
-          bottom: 2px; left: 50%;
-          transform: translateX(-50%);
-          width: 4px; height: 4px;
-          border-radius: 50%;
-          background: var(--accent);
+        .nav-link.active {
+          color: var(--accent);
+          background: color-mix(in srgb, var(--accent) 12%, transparent);
         }
 
         .header-actions {
@@ -307,7 +348,7 @@ export default function Header({ dark, onToggle }) {
         <nav className="header-nav">
           {NAV_LINKS.map((link) => (
             <a
-              key={link.href}
+              key={`${link.label}-${link.href}`}
               href={link.href}
               className={`nav-link${activeSection === link.href.replace("#", "") ? " active" : ""}`}
             >
@@ -352,7 +393,7 @@ export default function Header({ dark, onToggle }) {
         <div className="mobile-nav-links">
           {NAV_LINKS.map((link) => (
             <a
-              key={link.href}
+              key={`${link.label}-${link.href}`}
               href={link.href}
               className={`mobile-nav-link${activeSection === link.href.replace("#", "") ? " active" : ""}`}
               onClick={handleNavClick}
