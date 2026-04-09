@@ -39,7 +39,7 @@ const SOCIAL = [
 
 const LINKS = [
   { label: "Về mình", href: "#about" },
-  { label: "Hành trình", href: "#portfolio" },
+  { label: "Hành trình", href: "#about" },
   { label: "Liên hệ", href: "#contact" },
 ];
 

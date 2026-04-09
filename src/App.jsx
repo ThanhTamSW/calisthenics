@@ -3,7 +3,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Header from "./components/Header";
 import HeroSection from "./components/HeroSection";
 import AboutMe from "./components/AboutMe.jsx";
-import PortfolioGrid from "./components/PortfolioGrid";
 import ContactForm from "./components/ContactForm";
 import Footer from "./components/Footer";
 import AdminLogin from "./admin/AdminLogin";
@@ -21,7 +20,6 @@ function PublicSite({ dark, onToggle }) {
       <main>
         <HeroSection dark={dark} onToggle={onToggle} />
         <AboutMe />
-        <PortfolioGrid />
         <ContactForm />
       </main>
 

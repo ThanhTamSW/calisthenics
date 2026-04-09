@@ -2,7 +2,7 @@
 
 const NAV_LINKS = [
   { label: "Về mình", href: "#about" },
-  { label: "Hành trình", href: "#portfolio" },
+  { label: "Hành trình", href: "#about" },
   { label: "Liên hệ", href: "#contact" },
 ];
 
@@ -27,7 +27,7 @@ export default function Header({ dark, onToggle }) {
       { threshold: 0.4 }
     );
 
-    ["about", "portfolio", "contact"].forEach((id) => {
+    ["about", "contact"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     });
