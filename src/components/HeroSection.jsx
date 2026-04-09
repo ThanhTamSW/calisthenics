@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 
 // ============================================================
-// HERO SECTION — Tâm Calisthenics
-// Nhận dark/onToggle từ App để sync dark mode
+// HERO SECTION - Tam Calisthenics
+// Nhan dark/onToggle tu App de sync dark mode
 // ============================================================
-const HERO_CAROUSEL_AUTOPLAY_MS = 4000;
+const HERO_CAROUSEL_AUTOPLAY_MS = 6200;
+const HERO_CAROUSEL_TRANSITION_MS = 1200;
 const PROFILE_IMAGE_MODULES = import.meta.glob("../../images/profile*.{png,jpg,jpeg,webp,avif,gif,svg}", {
   eager: true,
   import: "default",
@@ -18,39 +19,84 @@ const PROFILE_IMAGES = Object.entries(PROFILE_IMAGE_MODULES)
   })
   .map(([, url]) => url);
 export default function HeroSection({ dark, onToggle }) {
-  const [mounted, setMounted] = useState(false);
   const [avatarIndex, setAvatarIndex] = useState(0);
+  const [avatarPrevIndex, setAvatarPrevIndex] = useState(null);
   const hasAvatarCarousel = PROFILE_IMAGES.length > 1;
+  const avatarTransitionTimerRef = useRef(null);
+
+  const clearAvatarTransitionTimer = useCallback(() => {
+    if (avatarTransitionTimerRef.current) {
+      clearTimeout(avatarTransitionTimerRef.current);
+      avatarTransitionTimerRef.current = null;
+    }
+  }, []);
+
+  const switchAvatar = useCallback((nextValue) => {
+    if (PROFILE_IMAGES.length === 0) return;
+
+    setAvatarIndex((currentIndex) => {
+      const rawNextIndex = typeof nextValue === "function"
+        ? nextValue(currentIndex)
+        : Number(nextValue);
+      const safeNextIndex = ((rawNextIndex % PROFILE_IMAGES.length) + PROFILE_IMAGES.length) % PROFILE_IMAGES.length;
+
+      if (safeNextIndex === currentIndex) return currentIndex;
+
+      setAvatarPrevIndex(currentIndex);
+      clearAvatarTransitionTimer();
+      avatarTransitionTimerRef.current = setTimeout(() => {
+        setAvatarPrevIndex(null);
+        avatarTransitionTimerRef.current = null;
+      }, HERO_CAROUSEL_TRANSITION_MS);
+
+      return safeNextIndex;
+    });
+  }, [clearAvatarTransitionTimer]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(timer);
+    if (PROFILE_IMAGES.length === 0) return;
+
+    PROFILE_IMAGES.forEach((url) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.loading = "eager";
+      image.src = url;
+      if (typeof image.decode === "function") {
+        image.decode().catch(() => {});
+      }
+    });
   }, []);
 
   useEffect(() => {
     if (!hasAvatarCarousel) return undefined;
 
     const timer = setInterval(() => {
-      setAvatarIndex((prev) => (prev + 1) % PROFILE_IMAGES.length);
+      switchAvatar((prev) => prev + 1);
     }, HERO_CAROUSEL_AUTOPLAY_MS);
 
     return () => clearInterval(timer);
-  }, [hasAvatarCarousel]);
+  }, [hasAvatarCarousel, switchAvatar]);
+
+  useEffect(() => {
+    return () => {
+      clearAvatarTransitionTimer();
+    };
+  }, [clearAvatarTransitionTimer]);
 
   const goPrevAvatar = () => {
     if (PROFILE_IMAGES.length === 0) return;
-    setAvatarIndex((prev) => (prev - 1 + PROFILE_IMAGES.length) % PROFILE_IMAGES.length);
+    switchAvatar((prev) => prev - 1);
   };
 
   const goNextAvatar = () => {
     if (PROFILE_IMAGES.length === 0) return;
-    setAvatarIndex((prev) => (prev + 1) % PROFILE_IMAGES.length);
+    switchAvatar((prev) => prev + 1);
   };
 
   return (
     <>
       <style>{`
-        /* —— ANIMATIONS —— */
+        /* -- ANIMATIONS -- */
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(32px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -77,7 +123,7 @@ export default function HeroSection({ dark, onToggle }) {
           to   { transform: translateX(-50%); }
         }
 
-        /* —— LAYOUT —— */
+        /* -- LAYOUT -- */
         .hero-wrap {
           position: relative;
           min-height: 100svh;
@@ -87,7 +133,7 @@ export default function HeroSection({ dark, onToggle }) {
           padding-top: 68px; /* offset cho sticky header */
         }
 
-        /* —— HERO BODY —— */
+        /* -- HERO BODY -- */
         .hero-body {
           flex: 1;
           display: grid;
@@ -100,7 +146,7 @@ export default function HeroSection({ dark, onToggle }) {
           margin: 0 auto;
         }
 
-        /* —— LEFT —— */
+        /* -- LEFT -- */
         .hero-left { padding-right: clamp(0px, 5vw, 60px); }
 
         .hero-tag {
@@ -228,7 +274,7 @@ export default function HeroSection({ dark, onToggle }) {
           transform: translateY(-2px);
         }
 
-        /* —— STATS ROW —— */
+        /* -- STATS ROW -- */
         .stats-row {
           display: flex;
           gap: 36px;
@@ -256,7 +302,7 @@ export default function HeroSection({ dark, onToggle }) {
           margin-top: 4px;
         }
 
-        /* —— RIGHT — AVATAR CARD —— */
+        /* -- RIGHT AVATAR CARD -- */
         .hero-right {
           display: flex;
           justify-content: flex-end;
@@ -300,10 +346,37 @@ export default function HeroSection({ dark, onToggle }) {
           background: var(--bg2);
           box-shadow: var(--shadow);
           animation: float 6s ease-in-out infinite;
+          transform: translateZ(0);
+          contain: paint;
         }
-        .avatar-img-wrap img {
-          width: 100%; height: 100%;
+        @keyframes avatarFadeIn {
+          from { opacity: 0; transform: translate3d(18px, 0, 0) scale(1.01); }
+          to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        }
+        @keyframes avatarFadeOut {
+          from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+          to { opacity: 0; transform: translate3d(-8px, 0, 0) scale(1.004); }
+        }
+
+        .avatar-slide {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
           object-fit: cover;
+          will-change: opacity, transform;
+          pointer-events: none;
+          backface-visibility: hidden;
+          transform: translateZ(0);
+        }
+        .avatar-slide.active {
+          opacity: 1;
+          z-index: 3;
+          animation: avatarFadeIn ${HERO_CAROUSEL_TRANSITION_MS}ms cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .avatar-slide.previous {
+          z-index: 2;
+          animation: avatarFadeOut ${HERO_CAROUSEL_TRANSITION_MS}ms cubic-bezier(0.16,1,0.3,1) both;
         }
         .avatar-carousel-nav {
           position: absolute;
@@ -353,7 +426,7 @@ export default function HeroSection({ dark, onToggle }) {
           width: 16px;
           background: #fff;
         }
-        /* Placeholder khi chưa có ảnh */
+        /* Placeholder khi chua co anh */
         .avatar-placeholder {
           width: 100%; height: 100%;
           display: flex;
@@ -422,7 +495,7 @@ export default function HeroSection({ dark, onToggle }) {
           white-space: nowrap;
         }
 
-        /* —— MARQUEE STRIP —— */
+        /* -- MARQUEE STRIP -- */
         .marquee-wrap {
           border-top: 1px solid var(--border);
           border-bottom: 1px solid var(--border);
@@ -456,7 +529,7 @@ export default function HeroSection({ dark, onToggle }) {
           flex-shrink: 0;
         }
 
-        /* —— RESPONSIVE —— */
+        /* -- RESPONSIVE -- */
         @media (max-width: 900px) {
           .hero-wrap { padding-top: 68px; }
           .hero-body {
@@ -558,9 +631,19 @@ export default function HeroSection({ dark, onToggle }) {
           .geo-circle-2 { width: 180px; height: 180px; }
           .social-pill-label { display: none; }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .avatar-slide.active,
+          .avatar-slide.previous {
+            animation: none;
+            opacity: 1;
+            transform: none;
+          }
+          .avatar-slide.previous { display: none; }
+        }
       `}</style>
 
-      {/* —— MARKUP —— */}
+      {/* -- MARKUP -- */}
       <div className="hero-wrap">
 
         {/* MARQUEE */}
@@ -595,9 +678,8 @@ export default function HeroSection({ dark, onToggle }) {
                 </svg>
               </span>
             </h1>
-
             <p className="hero-desc">
-              Mình là Thanh Tâm — đang comeback calisthenics sau 10 tháng nghỉ.
+              Mình là Thanh Tâm, theo calisthenics từ nền tảng cơ bản đến thi đấu thực chiến.
               Chia sẻ hành trình tập luyện thật, tiến bộ thật, không filter.
             </p>
 
@@ -615,21 +697,21 @@ export default function HeroSection({ dark, onToggle }) {
 
             <div className="stats-row">
               <div>
+                <div className="stat-num">Top 1</div>
+                <div className="stat-label">Premium Battle I</div>
+              </div>
+              <div>
                 <div className="stat-num">5+ <span>năm</span></div>
                 <div className="stat-label">Tập luyện</div>
               </div>
               <div>
-                <div className="stat-num">6+ <span>giải</span></div>
+                <div className="stat-num">7+ <span>giải</span></div>
                 <div className="stat-label">Đã tham gia</div>
-              </div>
-              <div>
-                <div className="stat-num">Top 1</div>
-                <div className="stat-label">Premium Battle</div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT — AVATAR */}
+          {/* RIGHT AVATAR */}
           <div className="hero-right">
             <div className="avatar-card">
               <div className="geo-circle geo-circle-1" />
@@ -648,7 +730,25 @@ export default function HeroSection({ dark, onToggle }) {
               {/* Avatar image carousel */}
               <div className="avatar-img-wrap">
                 {PROFILE_IMAGES.length > 0 ? (
-                  <img src={PROFILE_IMAGES[avatarIndex]} alt={`Thanh Tam ${avatarIndex + 1}`} loading="lazy" />
+                  <>
+                    {avatarPrevIndex !== null && PROFILE_IMAGES[avatarPrevIndex] ? (
+                      <img
+                        key={`avatar-prev-${avatarPrevIndex}-${avatarIndex}`}
+                        src={PROFILE_IMAGES[avatarPrevIndex]}
+                        alt=""
+                        aria-hidden="true"
+                        className="avatar-slide previous"
+                        loading="eager"
+                      />
+                    ) : null}
+                    <img
+                      key={`avatar-active-${avatarIndex}`}
+                      src={PROFILE_IMAGES[avatarIndex]}
+                      alt={`Thanh Tâm ${avatarIndex + 1}`}
+                      className="avatar-slide active"
+                      loading="eager"
+                    />
+                  </>
                 ) : (
                   <div className="avatar-placeholder">
                     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
@@ -673,7 +773,7 @@ export default function HeroSection({ dark, onToggle }) {
                           key={`avatar-dot-${index}`}
                           type="button"
                           className={`avatar-carousel-dot${index === avatarIndex ? " active" : ""}`}
-                          onClick={() => setAvatarIndex(index)}
+                          onClick={() => switchAvatar(index)}
                           aria-label={`Avatar ${index + 1}`}
                         />
                       ))}
@@ -684,7 +784,7 @@ export default function HeroSection({ dark, onToggle }) {
 
               {/* Badge */}
               <div className="avatar-badge">
-                💪 Never Give Up
+                Never Give Up
               </div>
             </div>
           </div>
@@ -694,3 +794,6 @@ export default function HeroSection({ dark, onToggle }) {
     </>
   );
 }
+
+
+

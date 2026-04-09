@@ -1,55 +1,207 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import useScrollReveal from "../hooks/useScrollReveal";
 
 // ============================================================
-// ABOUT ME — Tâm Calisthenics Personal Brand
+// ABOUT ME - Tam Calisthenics Personal Brand
 // ============================================================
 
-const SKILLS = [
-  { name: "Pull-ups", level: 85 },
-  { name: "Dips", level: 80 },
-  { name: "Muscle Up", level: 55 },
-  { name: "Handstand", level: 45 },
-  { name: "Front Lever", level: 40 },
-  { name: "Planche", level: 25 },
-];
+const TIMELINE_AUTOPLAY_MS = 4200;
+const TIMELINE_CAROUSEL_TRANSITION_MS = 900;
 
 const TIMELINE = [
   {
-    year: "2024",
-    title: "Giám khảo & Thi đấu",
-    desc: "Giám khảo Giải Battle Of Team I. Tham gia giải Battle Of Team Strength Lightz II.",
+    year: "30/03/2025",
+    title: "Battle Of Team II",
+    desc: "Tham gia thi đấu tại Battle Of Team II, tiếp tục hành trình cọ xát và nâng cấp bản thân.",
     accent: true,
+    cardTag: "Giải đấu",
+    chips: ["Battle Of Team", "Street Workout", "2025"],
+    imageKeys: [],
   },
   {
-    year: "2023",
-    title: "Top 1 Premium Battle & Thi đấu quốc gia",
-    desc: "Tham gia giải SOUTHERN STREET WORKOUT BATTLE 2023. Đạt Top 1 Premium Battle. Tham gia VIETNAM STREET WORKOUT CHAMPIONSHIP 2023 và PREMIUM BATTLE II.",
+    year: "31/12/2024",
+    title: "Giám khảo - Battle Of Team I",
+    desc: "Được mời làm giám khảo tại giải Battle Of Team I, đánh dấu cột mốc mới trong hành trình thi đấu.",
     accent: false,
+    cardTag: "Thành tích",
+    chips: ["Giám khảo", "Battle Of Team", "2024"],
+    imageKeys: ["giamkhao_1", "giamkhao_2", "giamkhao_3", "giamkhao_4", "giamkhao"],
+  },
+  {
+    year: "27/04/2024",
+    title: "PREMIUM BATTLE II",
+    desc: "Tiếp tục thi đấu tại Premium Battle II để tích lũy thêm kinh nghiệm sàn đấu.",
+    accent: false,
+    cardTag: "Giải đấu",
+    chips: ["Premium", "Battle", "2024"],
+    imageKeys: ["premium1_2"],
+  },
+  {
+    year: "21/01/2024",
+    title: "Ultimate Battle Z 2024",
+    desc: "Tham gia Ultimate Battle Z 2024, cọ xát cùng các vận động viên street workout mạnh trong khu vực.",
+    accent: false,
+    cardTag: "Giải đấu",
+    chips: ["Battle", "Street Workout", "2024"],
+    imageKeys: ["ultimateZ_1", "ultimateZ_2"],
+  },
+  {
+    year: "09/12/2023",
+    title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
+    desc: "Tham gia giải vô địch Street Workout Việt Nam 2023 cùng cộng đồng vận động viên cả nước.",
+    accent: false,
+    cardTag: "Giải đấu",
+    chips: ["Championship", "Street Workout", "2023"],
+    imageKeys: [],
+  },
+  {
+    year: "20/08/2023",
+    title: "PREMIUM BATTLE I",
+    desc: "Đạt hạng Top 1 tại Premium Battle I - một trong những thành tích nổi bật nhất.",
+    accent: false,
+    cardTag: "Thành tích",
+    chips: ["Top 1", "Champion", "Battle"],
+    imageKeys: ["premium1_1"],
+  },
+  {
+    year: "15/07/2023",
+    title: "SOUTHERN STREET WORKOUT BATTLE 2023",
+    desc: "Giải đấu street workout khu vực miền Nam, tạo nền tảng thi đấu chuyên nghiệp ban đầu.",
+    accent: false,
+    cardTag: "Giải đấu",
+    chips: ["Street Workout", "Battle", "2023"],
+    imageKeys: [],
   },
   {
     year: "2020",
     title: "Bắt đầu hành trình Calisthenics",
     desc: "Lần đầu tiếp xúc với calisthenics và street workout. Bắt đầu tập các động tác cơ bản và xây dựng nền tảng từ đầu.",
     accent: false,
+    cardTag: "Hành trình",
+    chips: ["Calisthenics", "Nền tảng", "Khởi đầu"],
+    imageKeys: [],
   },
 ];
 
 const INTERESTS = [
-  { emoji: "💪", label: "Calisthenics" },
-  { emoji: "🤸", label: "Street Workout" },
-  { emoji: "🎯", label: "Skills Training" },
-  { emoji: "🏃", label: "Cardio" },
-  { emoji: "🥗", label: "Dinh dưỡng" },
-  { emoji: "🎬", label: "Chia sẻ hành trình" },
+  { emoji: "\u{1F4AA}", label: "Calisthenics" },
+  { emoji: "\u{1F938}", label: "Street Workout" },
+  { emoji: "\u{1F3AF}", label: "Skills Training" },
+  { emoji: "\u{1F3C3}", label: "Cardio" },
+  { emoji: "\u{1F957}", label: "Dinh dưỡng" },
+  { emoji: "\u{1F3AC}", label: "Chia sẻ hành trình" },
 ];
 
+const TIMELINE_IMAGE_MODULES = import.meta.glob("../../images/*.{png,jpg,jpeg,webp,avif,gif,svg}", {
+  eager: true,
+  import: "default",
+});
+
+const TIMELINE_IMAGE_LOOKUP = Object.entries(TIMELINE_IMAGE_MODULES).reduce((acc, [path, url]) => {
+  const fileName = path.split("/").pop() || "";
+  const baseName = fileName.replace(/\.[^.]+$/, "");
+  acc[baseName] = url;
+  return acc;
+}, {});
+
+function resolveTimelineImages(imageKeys = []) {
+  return imageKeys
+    .map((key) => TIMELINE_IMAGE_LOOKUP[key] || "")
+    .filter(Boolean);
+}
+
+function TimelineMediaCarousel({ images, title }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [previousIndex, setPreviousIndex] = useState(null);
+
+  useEffect(() => {
+    setActiveIndex(0);
+    setPreviousIndex(null);
+  }, [images]);
+
+  useEffect(() => {
+    if (images.length <= 1) return undefined;
+
+    const timer = setInterval(() => {
+      setActiveIndex((current) => {
+        const next = (current + 1) % images.length;
+        setPreviousIndex(current);
+        return next;
+      });
+    }, TIMELINE_AUTOPLAY_MS);
+
+    return () => clearInterval(timer);
+  }, [images]);
+
+  useEffect(() => {
+    if (previousIndex === null) return undefined;
+    const timer = setTimeout(() => setPreviousIndex(null), TIMELINE_CAROUSEL_TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [previousIndex]);
+
+  const switchToIndex = (nextIndex) => {
+    if (nextIndex === activeIndex) return;
+    setPreviousIndex(activeIndex);
+    setActiveIndex(nextIndex);
+  };
+
+  if (images.length === 0) {
+    return (
+      <div className="timeline-project-placeholder">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="M21 15l-5-5L5 21" />
+        </svg>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {previousIndex !== null && images[previousIndex] ? (
+        <img
+          src={images[previousIndex]}
+          alt=""
+          aria-hidden="true"
+          className="timeline-project-image previous"
+          loading="lazy"
+        />
+      ) : null}
+      <img
+        src={images[activeIndex]}
+        alt={title}
+        className="timeline-project-image active"
+        loading="lazy"
+      />
+      {images.length > 1 && (
+        <div className="timeline-project-dots">
+          {images.map((_, index) => (
+            <button
+              key={`${title}-dot-${index}`}
+              type="button"
+              className={`timeline-project-dot${index === activeIndex ? " active" : ""}`}
+              aria-label={`Ảnh ${index + 1}`}
+              onClick={() => switchToIndex(index)}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function AboutMe() {
-  const [activeTab, setActiveTab] = useState("skills");
+  const [openTimelineId, setOpenTimelineId] = useState("");
   const headerLeftRef = useScrollReveal();
   const headerRightRef = useScrollReveal();
   const cardsRef = useScrollReveal();
   const tabsRef = useScrollReveal();
+
+  const toggleTimeline = (id) => {
+    setOpenTimelineId((current) => (current === id ? "" : id));
+  };
+
   return (
     <>
       <style>{`
@@ -58,13 +210,17 @@ export default function AboutMe() {
           from { opacity:0; transform:translateY(24px); }
           to   { opacity:1; transform:translateY(0); }
         }
-        @keyframes fillBar {
-          from { width: 0%; }
-          to   { width: var(--fill); }
-        }
         @keyframes float {
           0%,100% { transform:translateY(0); }
           50%      { transform:translateY(-8px); }
+        }
+        @keyframes timelineFadeIn {
+          from { opacity: 0; transform: scale(1.01); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes timelineFadeOut {
+          from { opacity: 1; transform: scale(1); }
+          to { opacity: 0; transform: scale(1.01); }
         }
 
         .about-section {
@@ -80,7 +236,7 @@ export default function AboutMe() {
           margin: 0 auto;
         }
 
-        /* —— HEADER —— */
+        /* -- HEADER -- */
         .about-header {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -154,7 +310,7 @@ export default function AboutMe() {
           transform: translateY(-2px);
         }
 
-        /* —— CARD GRID —— */
+        /* -- CARD GRID -- */
         .about-cards {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
@@ -195,7 +351,7 @@ export default function AboutMe() {
           font-weight: 400;
         }
 
-        /* —— TABS —— */
+        /* -- TABS -- */
         .tabs-wrap { animation: fadeUp 0.7s 0.3s both; }
 
         .tab-list {
@@ -229,42 +385,6 @@ export default function AboutMe() {
           color: #fff;
         }
 
-        /* Skills */
-        .skills-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-        .skill-item {}
-        .skill-header {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 8px;
-        }
-        .skill-name {
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: var(--fg);
-        }
-        .skill-pct {
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: var(--accent);
-        }
-        .skill-bar {
-          height: 6px;
-          background: var(--bg2);
-          border-radius: 999px;
-          overflow: hidden;
-        }
-        .skill-fill {
-          height: 100%;
-          background: linear-gradient(90deg, var(--accent), var(--accent2));
-          border-radius: 999px;
-          width: var(--fill);
-          animation: fillBar 1s 0.5s cubic-bezier(0.22,1,0.36,1) both;
-        }
-
         /* Timeline */
         .timeline {
           position: relative;
@@ -279,21 +399,40 @@ export default function AboutMe() {
         }
         .timeline-item {
           position: relative;
-          margin-bottom: 32px;
+          margin-bottom: 20px;
         }
         .timeline-item::before {
           content: '';
           position: absolute;
-          left: -25px; top: 6px;
+          left: -25px; top: 14px;
           width: 10px; height: 10px;
           border-radius: 50%;
           background: var(--bg2);
           border: 2px solid var(--border);
+          transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
         }
-        .timeline-item.accent::before {
+        .timeline-item.accent::before,
+        .timeline-item.open::before {
           background: var(--accent);
           border-color: var(--accent);
           box-shadow: 0 0 0 4px rgba(255,107,53,0.15);
+        }
+        .timeline-head {
+          width: 100%;
+          border: none;
+          background: transparent;
+          color: inherit;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          cursor: pointer;
+          text-align: left;
+          padding: 4px 0;
+        }
+        .timeline-head-main {
+          flex: 1;
+          min-width: 0;
         }
         .timeline-year {
           font-family: 'Space Grotesk', sans-serif;
@@ -307,16 +446,161 @@ export default function AboutMe() {
           font-size: 0.95rem;
           font-weight: 600;
           color: var(--fg);
-          margin-bottom: 6px;
+          line-height: 1.4;
+        }
+        .timeline-chevron {
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          border: 1px solid var(--border);
+          background: var(--bg2);
+          color: var(--fg2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.95rem;
+          flex-shrink: 0;
+          transition: transform 0.2s ease, color 0.2s, border-color 0.2s;
+        }
+        .timeline-item.open .timeline-chevron {
+          transform: rotate(90deg);
+          color: var(--accent);
+          border-color: var(--accent);
+        }
+        .timeline-panel {
+          max-height: 0;
+          opacity: 0;
+          overflow: hidden;
+          transform: translateY(-4px);
+          transition: max-height 0.38s ease, opacity 0.24s ease, transform 0.24s ease;
+        }
+        .timeline-panel.open {
+          max-height: 980px;
+          opacity: 1;
+          transform: translateY(0);
+          margin-top: 8px;
         }
         .timeline-desc {
           font-size: 0.85rem;
           font-weight: 300;
           color: var(--fg2);
           line-height: 1.65;
+          margin-bottom: 12px;
+        }
+        .timeline-project-card {
+          margin-top: 14px;
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          overflow: hidden;
+          transition: border-color 0.2s, transform 0.2s;
+        }
+        .timeline-project-card:hover {
+          border-color: var(--accent);
+          transform: translateY(-2px);
+        }
+        .timeline-project-thumb {
+          position: relative;
+          height: 170px;
+          background: linear-gradient(135deg, var(--bg2), var(--bg));
+          overflow: hidden;
+          transform: translateZ(0);
+        }
+        .timeline-project-image {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          backface-visibility: hidden;
+        }
+        .timeline-project-image.active {
+          z-index: 2;
+          animation: timelineFadeIn ${TIMELINE_CAROUSEL_TRANSITION_MS}ms ease both;
+        }
+        .timeline-project-image.previous {
+          z-index: 1;
+          animation: timelineFadeOut ${TIMELINE_CAROUSEL_TRANSITION_MS}ms ease both;
+        }
+        .timeline-project-placeholder {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--fg2);
+          opacity: 0.45;
+        }
+        .timeline-project-tag {
+          position: absolute;
+          right: 10px;
+          bottom: 10px;
+          font-size: 0.66rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          font-weight: 700;
+          color: #fff;
+          background: rgba(0, 0, 0, 0.55);
+          padding: 4px 9px;
+          border-radius: 999px;
+          backdrop-filter: blur(4px);
+          z-index: 3;
+        }
+        .timeline-project-dots {
+          position: absolute;
+          left: 50%;
+          bottom: 10px;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 6px;
+          z-index: 3;
+        }
+        .timeline-project-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          border: 0;
+          padding: 0;
+          background: rgba(255,255,255,0.45);
+          cursor: pointer;
+          transition: width 0.2s ease, background 0.2s ease;
+        }
+        .timeline-project-dot.active {
+          width: 14px;
+          background: #fff;
+        }
+        .timeline-project-body {
+          padding: 14px;
+        }
+        .timeline-project-title {
+          font-size: 0.92rem;
+          font-weight: 700;
+          color: var(--fg);
+          margin-bottom: 6px;
+        }
+        .timeline-project-desc {
+          font-size: 0.8rem;
+          line-height: 1.65;
+          color: var(--fg2);
+          margin-bottom: 12px;
+        }
+        .timeline-project-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .timeline-project-chip {
+          font-size: 0.7rem;
+          font-weight: 500;
+          color: var(--accent);
+          background: rgba(255,107,53,0.10);
+          border: 1px solid rgba(255,107,53,0.20);
+          border-radius: 6px;
+          padding: 3px 8px;
         }
 
-        /* —— RESPONSIVE —— */
+        /* -- RESPONSIVE -- */
         @media (max-width: 860px) {
           .about-section { padding: 72px 24px; }
           .about-header {
@@ -325,7 +609,6 @@ export default function AboutMe() {
             margin-bottom: 48px;
           }
           .about-cards { grid-template-columns: 1fr 1fr; }
-          .skills-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 640px) {
           .about-section { padding: 64px 16px; }
@@ -353,8 +636,10 @@ export default function AboutMe() {
           }
           .tab-list { padding: 3px; }
           .tab-btn { padding: 8px 14px; font-size: 0.78rem; }
-          .skills-grid { gap: 14px; }
-          .skill-name { font-size: 0.82rem; }
+          .timeline-project-thumb { height: 150px; }
+          .timeline-project-body { padding: 12px; }
+          .timeline-project-title { font-size: 0.88rem; }
+          .timeline-project-desc { font-size: 0.78rem; }
         }
         @media (max-width: 420px) {
           .about-section { padding: 56px 14px; }
@@ -372,26 +657,20 @@ export default function AboutMe() {
             <div ref={headerLeftRef} className="scroll-reveal-left">
               <div className="section-tag">Về mình</div>
               <h2 className="about-heading">
-                Tập ban ngày,<br />
-                Tập <em>ban đêm</em>
+                Kiên trì mỗi ngày,<br />
+                tiến bộ <em>mỗi ngày</em>
               </h2>
             </div>
             <div ref={headerRightRef} className="scroll-reveal-right">
               <div className="about-bio">
                 <p>
-                  Mình là <strong>Nguyễn Thanh Tâm</strong> — người đang
-                  comeback calisthenics sau <strong>10 tháng nghỉ</strong> vì bận công việc
-                  và cuộc sống thay đổi.
+                  Mình là <strong>Nguyễn Thanh Tâm</strong>, gắn bó với calisthenics từ năm <strong>2020</strong>.
                 </p>
                 <p>
-                  Mình tập calisthenics và chia sẻ hành trình
-                  trên TikTok & Facebook dưới thương hiệu <strong>Tâm Calisthenics</strong>.
-                  Mục tiêu của mình là chinh phục các động tác nâng cao như muscle up,
-                  front lever và planche.
+                  Quá trình tập luyện của mình đi từ các bài nền tảng như pull-up, dips, core đến các kỹ năng nâng cao như muscle up, front lever và planche.
                 </p>
                 <p>
-                  Mình tin rằng <strong>kỷ luật và nhất quán</strong> — dù trong
-                  tập luyện hay cuộc sống — là thứ tạo ra sự khác biệt thật sự.
+                  Mình chia sẻ hành trình trên TikTok & Facebook dưới thương hiệu <strong>Tâm Calisthenics</strong>. Mình tin rằng <strong>kỷ luật và nhất quán</strong> là điều tạo ra khác biệt thật sự.
                 </p>
               </div>
               <div className="interests">
@@ -407,66 +686,65 @@ export default function AboutMe() {
           {/* STAT CARDS */}
           <div ref={cardsRef} className="about-cards scroll-reveal">
             <div className="about-card">
-              <span className="card-icon">💪</span>
+              <span className="card-icon">{"\u{1F947}"}</span>
+              <div className="card-num">Top 1</div>
+              <div className="card-label">Premium Battle I</div>
+            </div>
+            <div className="about-card">
+              <span className="card-icon">{"\u{1F4AA}"}</span>
               <div className="card-num">5+</div>
               <div className="card-label">Năm tập luyện</div>
             </div>
             <div className="about-card">
-              <span className="card-icon">🏆</span>
-              <div className="card-num">6+</div>
+              <span className="card-icon">{"\u{1F3C6}"}</span>
+              <div className="card-num">7+</div>
               <div className="card-label">Giải đấu tham gia</div>
-            </div>
-            <div className="about-card">
-              <span className="card-icon">🥇</span>
-              <div className="card-num">Top 1</div>
-              <div className="card-label">Premium Battle</div>
             </div>
           </div>
 
           {/* TABS */}
           <div ref={tabsRef} className="tabs-wrap scroll-reveal">
             <div className="tab-list">
-              <button
-                className={`tab-btn${activeTab === "skills" ? " active" : ""}`}
-                onClick={() => setActiveTab("skills")}
-              >
-                Kỹ năng
-              </button>
-              <button
-                className={`tab-btn${activeTab === "timeline" ? " active" : ""}`}
-                onClick={() => setActiveTab("timeline")}
-              >
-                Hành trình
-              </button>
+              <button className="tab-btn active">Hành trình</button>
             </div>
 
-            {activeTab === "skills" && (
-              <div className="skills-grid">
-                {SKILLS.map((s) => (
-                  <div key={s.name} className="skill-item">
-                    <div className="skill-header">
-                      <span className="skill-name">{s.name}</span>
-                      <span className="skill-pct">{s.level}%</span>
-                    </div>
-                    <div className="skill-bar">
-                      <div className="skill-fill" style={{ "--fill": `${s.level}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <div className="timeline">
+              {TIMELINE.map((t, index) => {
+                const timelineId = `${t.year}-${t.title}`;
+                const isOpen = openTimelineId === timelineId;
+                const images = resolveTimelineImages(t.imageKeys);
+                return (
+                  <div key={`${t.year}-${t.title}-${index}`} className={`timeline-item${t.accent ? " accent" : ""}${isOpen ? " open" : ""}`}>
+                    <button type="button" className="timeline-head" onClick={() => toggleTimeline(timelineId)} aria-expanded={isOpen}>
+                      <div className="timeline-head-main">
+                        <div className="timeline-year">{t.year}</div>
+                        <div className="timeline-title">{t.title}</div>
+                      </div>
+                      <span className="timeline-chevron">{">"}</span>
+                    </button>
 
-            {activeTab === "timeline" && (
-              <div className="timeline">
-                {TIMELINE.map((t) => (
-                  <div key={t.year} className={`timeline-item${t.accent ? " accent" : ""}`}>
-                    <div className="timeline-year">{t.year}</div>
-                    <div className="timeline-title">{t.title}</div>
-                    <div className="timeline-desc">{t.desc}</div>
+                    <div className={`timeline-panel${isOpen ? " open" : ""}`}>
+                      <div className="timeline-desc">{t.desc}</div>
+                      <div className="timeline-project-card">
+                        <div className="timeline-project-thumb">
+                          <TimelineMediaCarousel images={images} title={t.title} />
+                          <span className="timeline-project-tag">{t.cardTag}</span>
+                        </div>
+                        <div className="timeline-project-body">
+                          <div className="timeline-project-title">{t.title}</div>
+                          <div className="timeline-project-desc">{t.desc}</div>
+                          <div className="timeline-project-chips">
+                            {t.chips.map((chip) => (
+                              <span key={`${t.title}-${chip}`} className="timeline-project-chip">{chip}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
 
         </div>
@@ -474,3 +752,12 @@ export default function AboutMe() {
     </>
   );
 }
+
+
+
+
+
+
+
+
+

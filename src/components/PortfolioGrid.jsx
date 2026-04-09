@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import useScrollReveal from "../hooks/useScrollReveal";
 
 // ============================================================
-// PORTFOLIO GRID — fetch từ /api/portfolio.php
+// PORTFOLIO GRID - fetch tu /api/portfolio.php
 // ============================================================
 
 const TAGS = ["Tất cả", "Giải đấu", "Thành tích", "Content"];
 
-// Fallback data khi chưa có API
+// Fallback data khi chua co API
 const FALLBACK_PROJECTS = [
   {
     id: 1,
-    title: "🥇 Top 1 Premium Battle",
+    title: "Top 1 Premium Battle",
     description: "Đạt giải Top 1 tại Premium Battle. Một trong những thành tích đáng tự hào nhất trong hành trình calisthenics.",
     tech: ["Top 1", "Champion", "Battle"],
     tag: "Thành tích",
@@ -35,7 +35,7 @@ const FALLBACK_PROJECTS = [
     id: 3,
     title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
     description: "Tham gia giải vô địch Street Workout Việt Nam 2023. Sân chơi lớn nhất cho cộng đồng calisthenics cả nước.",
-    tech: ["Quốc gia", "Championship", "2023"],
+    tech: ["Quoc gia", "Championship", "2023"],
     tag: "Giải đấu",
     demo: "",
     github: "",
@@ -57,7 +57,7 @@ const FALLBACK_PROJECTS = [
     id: 5,
     title: "Giám khảo - Battle Of Team I",
     description: "Được mời làm giám khảo tại giải Battle Of Team I. Từ vận động viên trở thành người đánh giá.",
-    tech: ["Giám khảo", "Battle Of Team", "2024"],
+    tech: ["Giam khao", "Battle Of Team", "2024"],
     tag: "Thành tích",
     demo: "",
     github: "",
@@ -88,7 +88,8 @@ const FALLBACK_PROJECTS = [
   },
 ];
 
-const CARD_CAROUSEL_AUTOPLAY_MS = 3500;
+const CARD_CAROUSEL_AUTOPLAY_MS = 5200;
+const CARD_CAROUSEL_TRANSITION_MS = 1200;
 const DEFAULT_PORTFOLIO_API_URL = "/api/portfolio.php";
 const PORTFOLIO_API_URL = import.meta.env.VITE_PORTFOLIO_API_URL || DEFAULT_PORTFOLIO_API_URL;
 
@@ -111,6 +112,14 @@ function normalizeText(value) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function formatTagLabel(value) {
+  const key = normalizeText(value);
+  if (key === "tat ca") return "Tất cả";
+  if (key === "giai dau") return "Giải đấu";
+  if (key === "thanh tich") return "Thành tích";
+  return value;
 }
 
 function buildImageGroups(modules) {
@@ -238,6 +247,7 @@ function attachProjectImages(list) {
 
 function ProjectCard({ project, index }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [previousIndex, setPreviousIndex] = useState(null);
   const images = Array.isArray(project.images) && project.images.length > 0
     ? project.images
     : project.thumbnail
@@ -245,43 +255,131 @@ function ProjectCard({ project, index }) {
       : [];
   const hasCarousel = images.length > 1;
   const useContainFit = project.thumbnailFit === "contain";
-  const currentImage = images[activeIndex];
-  const activePosition = Array.isArray(project.thumbnailPositions) && project.thumbnailPositions[activeIndex]
-    ? project.thumbnailPositions[activeIndex]
-    : project.thumbnailPosition;
-  const activeScale = Array.isArray(project.thumbnailScales) && project.thumbnailScales[activeIndex]
-    ? project.thumbnailScales[activeIndex]
-    : 1;
-  const useCoverBackdrop = !useContainFit && activeScale < 0.999 && Boolean(currentImage);
-  const thumbStyle = useCoverBackdrop
-    ? {
-      backgroundImage: `url(${currentImage})`,
-      backgroundSize: "cover",
-      backgroundPosition: activePosition || "center center",
-      backgroundRepeat: "no-repeat",
+  const transitionTimerRef = useRef(null);
+  const activeImageIndex = images.length > 0
+    ? ((activeIndex % images.length) + images.length) % images.length
+    : 0;
+  const previousImageIndex = previousIndex !== null && images.length > 0
+    ? ((previousIndex % images.length) + images.length) % images.length
+    : null;
+
+  const getSlidePosition = (slideIndex) =>
+    Array.isArray(project.thumbnailPositions) && project.thumbnailPositions[slideIndex]
+      ? project.thumbnailPositions[slideIndex]
+      : project.thumbnailPosition;
+
+  const getSlideScale = (slideIndex) =>
+    Array.isArray(project.thumbnailScales) && project.thumbnailScales[slideIndex]
+      ? project.thumbnailScales[slideIndex]
+      : 1;
+
+  const clearSlideTransitionTimer = useCallback(() => {
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
     }
-    : undefined;
+  }, []);
+
+  const switchSlide = useCallback((nextValue) => {
+    if (images.length === 0) return;
+
+    setActiveIndex((currentIndex) => {
+      const rawNextIndex = typeof nextValue === "function"
+        ? nextValue(currentIndex)
+        : Number(nextValue);
+      const safeNextIndex = ((rawNextIndex % images.length) + images.length) % images.length;
+
+      if (safeNextIndex === currentIndex) return currentIndex;
+
+      setPreviousIndex(currentIndex);
+      clearSlideTransitionTimer();
+      transitionTimerRef.current = setTimeout(() => {
+        setPreviousIndex(null);
+        transitionTimerRef.current = null;
+      }, CARD_CAROUSEL_TRANSITION_MS);
+
+      return safeNextIndex;
+    });
+  }, [clearSlideTransitionTimer, images.length]);
 
   useEffect(() => {
     setActiveIndex(0);
-  }, [project.id, images.length]);
+    setPreviousIndex(null);
+    clearSlideTransitionTimer();
+  }, [clearSlideTransitionTimer, project.id, images.length]);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+
+    images.forEach((url) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.loading = "eager";
+      image.src = url;
+      if (typeof image.decode === "function") {
+        image.decode().catch(() => {});
+      }
+    });
+  }, [images]);
 
   useEffect(() => {
     if (!hasCarousel) return undefined;
 
     const timer = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % images.length);
+      switchSlide((prev) => prev + 1);
     }, CARD_CAROUSEL_AUTOPLAY_MS);
 
     return () => clearInterval(timer);
-  }, [hasCarousel, images.length]);
+  }, [hasCarousel, switchSlide]);
+
+  useEffect(() => {
+    return () => {
+      clearSlideTransitionTimer();
+    };
+  }, [clearSlideTransitionTimer]);
 
   const goPrev = () => {
-    setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+    switchSlide((prev) => prev - 1);
   };
 
   const goNext = () => {
-    setActiveIndex((prev) => (prev + 1) % images.length);
+    switchSlide((prev) => prev + 1);
+  };
+
+  const renderSlide = (imageUrl, imageIndex, variant) => {
+    const slidePosition = getSlidePosition(imageIndex);
+    const slideScale = getSlideScale(imageIndex);
+    const shouldRenderBackdrop = useContainFit || (!useContainFit && slideScale < 0.999);
+
+    return (
+      <div
+        key={`${project.id}-${variant}-${imageIndex}-${activeIndex}`}
+        className={`card-thumb-slide ${variant}`}
+        aria-hidden={variant !== "active"}
+      >
+        {shouldRenderBackdrop && (
+          <img
+            src={imageUrl}
+            alt=""
+            aria-hidden="true"
+            className="card-thumb-backdrop"
+            loading="eager"
+            style={slidePosition ? { objectPosition: slidePosition } : undefined}
+          />
+        )}
+        <img
+          src={imageUrl}
+          alt={`${project.title} ${imageIndex + 1}`}
+          className="card-thumb-image"
+          loading="eager"
+          style={{
+            ...(slidePosition ? { objectPosition: slidePosition } : {}),
+            ...(project.thumbnailFit ? { objectFit: project.thumbnailFit } : {}),
+            ...(slideScale !== 1 ? { transform: `scale(${slideScale})`, transformOrigin: "center center" } : {}),
+          }}
+        />
+      </div>
+    );
   };
 
   return (
@@ -290,29 +388,13 @@ function ProjectCard({ project, index }) {
       style={{ animationDelay: `${index * 0.08}s` }}
     >
       {/* Thumbnail */}
-      <div className={`card-thumb${useContainFit ? " contain-fit" : ""}`} style={thumbStyle}>
+      <div className={`card-thumb${useContainFit ? " contain-fit" : ""}`}>
         {images.length > 0 ? (
           <>
-            {useContainFit && (
-              <img
-                src={currentImage}
-                alt=""
-                aria-hidden="true"
-                className="card-thumb-backdrop"
-                loading="lazy"
-              />
-            )}
-            <img
-              src={currentImage}
-              alt={`${project.title} ${activeIndex + 1}`}
-              className="card-thumb-image"
-              loading="lazy"
-              style={{
-                ...(activePosition ? { objectPosition: activePosition } : {}),
-                ...(project.thumbnailFit ? { objectFit: project.thumbnailFit } : {}),
-                ...(activeScale !== 1 ? { transform: `scale(${activeScale})`, transformOrigin: "center center" } : {}),
-              }}
-            />
+            {previousImageIndex !== null && images[previousImageIndex] ? (
+              renderSlide(images[previousImageIndex], previousImageIndex, "previous")
+            ) : null}
+            {renderSlide(images[activeImageIndex], activeImageIndex, "active")}
           </>
         ) : (
           <div className="thumb-placeholder">
@@ -336,16 +418,16 @@ function ProjectCard({ project, index }) {
                 <button
                   key={`${project.id}-dot-${dotIndex}`}
                   type="button"
-                  className={`carousel-dot${dotIndex === activeIndex ? " active" : ""}`}
+                  className={`carousel-dot${dotIndex === activeImageIndex ? " active" : ""}`}
                   aria-label={`Ảnh ${dotIndex + 1}`}
-                  onClick={() => setActiveIndex(dotIndex)}
+                  onClick={() => switchSlide(dotIndex)}
                 />
               ))}
             </div>
           </>
         )}
         {project.featured && <div className="featured-badge">Featured</div>}
-        <div className="card-tag-chip">{project.tag}</div>
+        <div className="card-tag-chip">{formatTagLabel(project.tag)}</div>
       </div>
 
       {/* Content */}
@@ -359,29 +441,28 @@ function ProjectCard({ project, index }) {
           ))}
         </div>
 
-        <div className="card-links">
-          {project.demo && (
-            <a href={project.demo} target="_blank" rel="noreferrer" className="link-btn primary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              Demo
-            </a>
-          )}
-          {project.github && (
-            <a href={project.github} target="_blank" rel="noreferrer" className="link-btn secondary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-              </svg>
-              GitHub
-            </a>
-          )}
-          {!project.demo && !project.github && (
-            <span className="link-btn disabled">Sắp ra mắt</span>
-          )}
-        </div>
+        {(project.demo || project.github) && (
+          <div className="card-links">
+            {project.demo && (
+              <a href={project.demo} target="_blank" rel="noreferrer" className="link-btn primary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+                Demo
+              </a>
+            )}
+            {project.github && (
+              <a href={project.github} target="_blank" rel="noreferrer" className="link-btn secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+                GitHub
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -441,9 +522,9 @@ export default function PortfolioGrid() {
   }, []);
 
   const filtered =
-    activeTag === "Tất cả"
+    normalizeText(activeTag) === "tat ca"
       ? projects
-      : projects.filter((p) => p.tag === activeTag);
+      : projects.filter((p) => normalizeText(p.tag) === normalizeText(activeTag));
 
   return (
     <>
@@ -456,6 +537,14 @@ export default function PortfolioGrid() {
         @keyframes shimmer {
           from { background-position: -400px 0; }
           to   { background-position: 400px 0; }
+        }
+        @keyframes cardFadeIn {
+          from { opacity: 0; transform: translate3d(14px, 0, 0) scale(1.01); }
+          to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        }
+        @keyframes cardFadeOut {
+          from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+          to { opacity: 0; transform: translate3d(-8px, 0, 0) scale(1.004); }
         }
 
         .portfolio-section {
@@ -564,6 +653,27 @@ export default function PortfolioGrid() {
           height: 180px;
           background: var(--bg2);
           overflow: hidden;
+          transform: translateZ(0);
+          contain: paint;
+        }
+        .card-thumb-slide {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          will-change: opacity, transform;
+          pointer-events: none;
+          z-index: 1;
+          backface-visibility: hidden;
+          transform: translateZ(0);
+        }
+        .card-thumb-slide.active {
+          opacity: 1;
+          z-index: 3;
+          animation: cardFadeIn ${CARD_CAROUSEL_TRANSITION_MS}ms cubic-bezier(0.16,1,0.3,1) both;
+        }
+        .card-thumb-slide.previous {
+          z-index: 2;
+          animation: cardFadeOut ${CARD_CAROUSEL_TRANSITION_MS}ms cubic-bezier(0.16,1,0.3,1) both;
         }
         .card-thumb.contain-fit::after {
           content: "";
@@ -584,6 +694,7 @@ export default function PortfolioGrid() {
           transform: scale(1.14);
           opacity: 0.95;
           z-index: 0;
+          backface-visibility: hidden;
         }
         .card-thumb-image {
           position: relative;
@@ -592,7 +703,8 @@ export default function PortfolioGrid() {
           height: 100%;
           object-fit: cover;
           display: block;
-          transition: transform 0.35s ease;
+          transition: none;
+          backface-visibility: hidden;
         }
         .thumb-placeholder {
           width:100%; height:100%;
@@ -831,6 +943,16 @@ export default function PortfolioGrid() {
           .project-card.featured .card-thumb { height: 176px; }
         }
 
+        @media (prefers-reduced-motion: reduce) {
+          .card-thumb-slide.active,
+          .card-thumb-slide.previous {
+            animation: none;
+            opacity: 1;
+            transform: none;
+          }
+          .card-thumb-slide.previous { display: none; }
+        }
+
       `}</style>
 
       <section className="portfolio-section" id="portfolio">
@@ -885,5 +1007,4 @@ export default function PortfolioGrid() {
     </>
   );
 }
-
 

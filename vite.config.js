@@ -16,6 +16,14 @@ export default defineConfig(({ mode }) => {
       exclude: ["tests/e2e/**", "node_modules/**", "dist/**"],
     },
     server: {
+      host: "127.0.0.1",
+      port: 5173,
+      strictPort: true,
+      hmr: {
+        host: "127.0.0.1",
+        protocol: "ws",
+        clientPort: 5173,
+      },
       proxy: {
         // Dev: proxy API calls sang PHP server local
         "/api": {

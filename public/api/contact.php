@@ -3,6 +3,8 @@
 use PHPMailer\PHPMailer\Exception as MailException;
 use PHPMailer\PHPMailer\PHPMailer;
 
+require_once __DIR__ . '/db.php';
+
 ini_set('display_errors', '0');
 ini_set('html_errors', '0');
 
@@ -529,6 +531,31 @@ if ($antiSpam['recaptchaSecret'] !== '') {
     }
 }
 
+$contactId = null;
+try {
+    $pdo = app_pdo();
+    $insertStmt = $pdo->prepare(
+        'INSERT INTO contacts (name, email, subject, message, ip_address, user_agent, status)
+         VALUES (:name, :email, :subject, :message, :ip_address, :user_agent, :status)'
+    );
+    $insertStmt->execute([
+        'name' => $name,
+        'email' => $email,
+        'subject' => $subject,
+        'message' => $message,
+        'ip_address' => $clientIp,
+        'user_agent' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+        'status' => 'new',
+    ]);
+    $contactId = (int) $pdo->lastInsertId();
+} catch (Throwable $exception) {
+    error_log('[contact.php] Save contact to DB failed - ' . $exception->getMessage());
+    jsonResponse(500, [
+        'success' => false,
+        'message' => 'Khong the luu tin nhan vao he thong luc nay.',
+    ]);
+}
+
 $mailSubject = sprintf('[%s] - tu %s', $subject, sanitizeHeaderValue($name));
 $body = "Ban co tin nhan moi tu website tamcalisthenics.\n\n";
 $body .= "----------------------------\n";
@@ -582,4 +609,4 @@ if ($config['sendConfirmation']) {
     }
 }
 
-jsonResponse(200, ['success' => true, 'message' => 'Gui thanh cong']);
+jsonResponse(200, ['success' => true, 'message' => 'Gui thanh cong', 'contactId' => $contactId]);
