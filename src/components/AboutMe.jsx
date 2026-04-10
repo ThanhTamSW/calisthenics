@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import useScrollReveal from "../hooks/useScrollReveal";
 
 // ============================================================
@@ -133,11 +133,12 @@ function resolveTimelineImages(imageKeys = []) {
 function TimelineMediaCarousel({ images, title }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState(null);
+  const imageSignature = images.map((image) => `${image.src}::${image.position || ""}`).join("|");
 
   useEffect(() => {
     setActiveIndex(0);
     setPreviousIndex(null);
-  }, [images]);
+  }, [imageSignature]);
 
   useEffect(() => {
     if (images.length <= 1) return undefined;
@@ -151,7 +152,7 @@ function TimelineMediaCarousel({ images, title }) {
     }, TIMELINE_AUTOPLAY_MS);
 
     return () => clearInterval(timer);
-  }, [images]);
+  }, [imageSignature, images.length]);
 
   useEffect(() => {
     if (previousIndex === null) return undefined;
@@ -215,10 +216,59 @@ function TimelineMediaCarousel({ images, title }) {
 
 export default function AboutMe() {
   const [openTimelineId, setOpenTimelineId] = useState("");
+  const [activeTimelineId, setActiveTimelineId] = useState("");
   const headerLeftRef = useScrollReveal();
   const headerRightRef = useScrollReveal();
   const cardsRef = useScrollReveal();
   const tabsRef = useScrollReveal();
+  const timelineItemRefs = useRef({});
+
+  useEffect(() => {
+    const getItems = () =>
+      Object.entries(timelineItemRefs.current)
+        .map(([id, element]) => ({ id, element }))
+        .filter((item) => item.element instanceof HTMLElement);
+
+    let items = getItems();
+
+    const syncActiveTimelineItem = () => {
+      if (items.length === 0) {
+        items = getItems();
+        if (items.length === 0) return;
+      }
+
+      const focusLine = window.innerHeight * 0.42;
+      const sortedItems = [...items].sort((a, b) => {
+        const aTop = a.element.getBoundingClientRect().top;
+        const bTop = b.element.getBoundingClientRect().top;
+        return aTop - bTop;
+      });
+
+      let nextActiveId = sortedItems[0].id;
+
+      for (let index = 0; index < sortedItems.length; index += 1) {
+        const { id, element } = sortedItems[index];
+        const rect = element.getBoundingClientRect();
+        const markerY = rect.top + 14;
+        if (markerY <= focusLine) {
+          nextActiveId = id;
+        } else {
+          break;
+        }
+      }
+
+      setActiveTimelineId((current) => (current === nextActiveId ? current : nextActiveId));
+    };
+
+    syncActiveTimelineItem();
+    window.addEventListener("scroll", syncActiveTimelineItem, { passive: true });
+    window.addEventListener("resize", syncActiveTimelineItem);
+
+    return () => {
+      window.removeEventListener("scroll", syncActiveTimelineItem);
+      window.removeEventListener("resize", syncActiveTimelineItem);
+    };
+  }, []);
 
   const toggleTimeline = (id) => {
     setOpenTimelineId((current) => (current === id ? "" : id));
@@ -243,6 +293,15 @@ export default function AboutMe() {
         @keyframes timelineFadeOut {
           from { opacity: 1; transform: scale(1); }
           to { opacity: 0; transform: scale(1.01); }
+        }
+        @keyframes timelinePointPop {
+          0% { transform: translateX(0) scale(1); }
+          60% { transform: translateX(3px) scale(1.95); }
+          100% { transform: translateX(2px) scale(1.55); }
+        }
+        @keyframes timelinePointPulse {
+          0%, 100% { transform: translateX(2px) scale(1); opacity: 0.5; }
+          50% { transform: translateX(2px) scale(1.22); opacity: 0.15; }
         }
 
         .about-section {
@@ -374,7 +433,10 @@ export default function AboutMe() {
         }
 
         /* -- TABS -- */
-        .tabs-wrap { animation: fadeUp 0.7s 0.3s both; }
+        .tabs-wrap {
+          animation: fadeUp 0.7s 0.3s both;
+          overflow: visible;
+        }
 
         .tab-list {
           display: flex;
@@ -411,6 +473,8 @@ export default function AboutMe() {
         .timeline {
           position: relative;
           padding-left: 28px;
+          padding-right: 14px;
+          overflow: visible;
         }
         .timeline::before {
           content: '';
@@ -422,6 +486,8 @@ export default function AboutMe() {
         .timeline-item {
           position: relative;
           margin-bottom: 20px;
+          --timeline-panel-shift: clamp(14px, 1.8vw, 22px);
+          --timeline-panel-scale: 1.015;
         }
         .timeline-item::before {
           content: '';
@@ -431,13 +497,41 @@ export default function AboutMe() {
           border-radius: 50%;
           background: var(--bg2);
           border: 2px solid var(--border);
-          transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+          transform: scale(1);
+          z-index: 2;
+          transition: background 0.24s, border-color 0.24s, box-shadow 0.24s, transform 0.24s;
+        }
+        .timeline-item::after {
+          content: '';
+          position: absolute;
+          left: -32px;
+          top: 7px;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 1px solid rgba(255,107,53,0.5);
+          background: radial-gradient(circle, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0) 70%);
+          opacity: 0;
+          transform: scale(0.85);
+          pointer-events: none;
+          z-index: 1;
+          transition: opacity 0.2s ease;
         }
         .timeline-item.accent::before,
-        .timeline-item.open::before {
+        .timeline-item.open::before,
+        .timeline-item.in-view::before {
           background: var(--accent);
           border-color: var(--accent);
           box-shadow: 0 0 0 4px rgba(255,107,53,0.15);
+        }
+        .timeline-item.in-view::before {
+          transform: translateX(2px) scale(1.55);
+          box-shadow: 0 0 0 5px rgba(255,107,53,0.16), 0 0 14px rgba(255,107,53,0.46);
+          animation: timelinePointPop 0.34s cubic-bezier(0.2, 0.85, 0.24, 1) both;
+        }
+        .timeline-item.in-view::after {
+          opacity: 1;
+          animation: timelinePointPulse 1.6s ease-in-out infinite;
         }
         .timeline-head {
           width: 100%;
@@ -455,6 +549,8 @@ export default function AboutMe() {
         .timeline-head-main {
           flex: 1;
           min-width: 0;
+          transform-origin: left center;
+          transition: transform 0.28s cubic-bezier(0.2, 0.85, 0.24, 1), color 0.24s ease;
         }
         .timeline-year {
           font-family: 'Space Grotesk', sans-serif;
@@ -463,12 +559,14 @@ export default function AboutMe() {
           letter-spacing: 0.1em;
           color: var(--accent);
           margin-bottom: 4px;
+          transition: color 0.24s ease, transform 0.24s ease;
         }
         .timeline-title {
           font-size: 0.95rem;
           font-weight: 600;
           color: var(--fg);
           line-height: 1.4;
+          transition: color 0.24s ease, transform 0.24s ease;
         }
         .timeline-chevron {
           width: 28px;
@@ -489,18 +587,87 @@ export default function AboutMe() {
           color: var(--accent);
           border-color: var(--accent);
         }
+        .timeline-item.in-view .timeline-head-main {
+          transform: translateX(clamp(14px, 1.8vw, 22px)) scale(1.04);
+        }
+        .timeline-item.in-view .timeline-year,
+        .timeline-item.in-view .timeline-title {
+          transform: translateX(1px);
+        }
+        .timeline-item.in-view .timeline-title {
+          color: color-mix(in srgb, var(--accent) 86%, #fff);
+        }
+        .timeline-item.in-view .timeline-chevron {
+          color: var(--accent);
+          border-color: rgba(255,107,53,0.45);
+          transform: translateX(5px);
+        }
+        .timeline-item.open.in-view .timeline-chevron {
+          transform: rotate(90deg) translateX(5px);
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .timeline-item:hover::before {
+            transform: translateX(2px) scale(1.55);
+            box-shadow: 0 0 0 5px rgba(255,107,53,0.16), 0 0 14px rgba(255,107,53,0.46);
+            animation: timelinePointPop 0.34s cubic-bezier(0.2, 0.85, 0.24, 1) both;
+          }
+          .timeline-item:hover::after {
+            opacity: 1;
+            animation: timelinePointPulse 1.6s ease-in-out infinite;
+          }
+          .timeline-item:hover .timeline-head-main {
+            transform: translateX(clamp(14px, 1.8vw, 22px)) scale(1.04);
+          }
+          .timeline-item:hover .timeline-year,
+          .timeline-item:hover .timeline-title {
+            transform: translateX(1px);
+          }
+          .timeline-item:hover .timeline-title {
+            color: color-mix(in srgb, var(--accent) 86%, #fff);
+          }
+          .timeline-item:hover .timeline-chevron {
+            color: var(--accent);
+            border-color: rgba(255,107,53,0.45);
+            transform: translateX(5px);
+          }
+          .timeline-item.open:hover .timeline-chevron {
+            transform: rotate(90deg) translateX(5px);
+          }
+          .timeline-item:hover .timeline-panel.open {
+            transform: translateY(0) translateX(var(--timeline-panel-shift)) scale(var(--timeline-panel-scale));
+          }
+          .timeline-item:hover .timeline-project-card {
+            border-color: rgba(255,107,53,0.4);
+            box-shadow: 0 10px 24px rgba(255,107,53,0.12);
+          }
+        }
         .timeline-panel {
-          max-height: 0;
+          display: grid;
+          grid-template-rows: 0fr;
           opacity: 0;
           overflow: hidden;
           transform: translateY(-4px);
-          transition: max-height 0.38s ease, opacity 0.24s ease, transform 0.24s ease;
+          margin-top: 0;
+          transition:
+            grid-template-rows 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.26s ease,
+            transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+            margin-top 0.28s ease;
+          will-change: grid-template-rows, opacity, transform;
+        }
+        .timeline-panel-inner {
+          min-height: 0;
+          overflow: hidden;
         }
         .timeline-panel.open {
-          max-height: 980px;
+          grid-template-rows: 1fr;
           opacity: 1;
           transform: translateY(0);
           margin-top: 8px;
+          transform-origin: left top;
+        }
+        .timeline-item.in-view .timeline-panel.open {
+          transform: translateY(0) translateX(var(--timeline-panel-shift)) scale(var(--timeline-panel-scale));
         }
         .timeline-desc {
           font-size: 0.85rem;
@@ -517,11 +684,15 @@ export default function AboutMe() {
           border: 1px solid var(--border);
           border-radius: 16px;
           overflow: hidden;
-          transition: border-color 0.2s, transform 0.2s;
+          transition: border-color 0.2s, transform 0.2s, box-shadow 0.24s ease;
         }
         .timeline-project-card:hover {
           border-color: var(--accent);
           transform: translateY(-2px);
+        }
+        .timeline-item.in-view .timeline-project-card {
+          border-color: rgba(255,107,53,0.4);
+          box-shadow: 0 10px 24px rgba(255,107,53,0.12);
         }
         .timeline-project-thumb {
           position: relative;
@@ -661,6 +832,10 @@ export default function AboutMe() {
           }
           .tab-list { padding: 3px; }
           .tab-btn { padding: 8px 14px; font-size: 0.78rem; }
+          .timeline-item.in-view .timeline-head-main {
+            transform: translateX(10px) scale(1.02);
+          }
+          .timeline-item { --timeline-panel-shift: 10px; --timeline-panel-scale: 1.008; }
           .timeline-project-thumb { height: 180px; }
           .timeline-project-body { padding: 12px; }
           .timeline-project-title { font-size: 0.88rem; }
@@ -671,6 +846,10 @@ export default function AboutMe() {
           .about-cards { grid-template-columns: 1fr; gap: 10px; }
           .about-header { margin-bottom: 28px; }
           .tab-btn { padding: 7px 12px; font-size: 0.75rem; }
+          .timeline-item.in-view .timeline-head-main {
+            transform: translateX(8px) scale(1.01);
+          }
+          .timeline-item { --timeline-panel-shift: 8px; --timeline-panel-scale: 1.004; }
         }
       `}</style>
 
@@ -737,9 +916,17 @@ export default function AboutMe() {
               {TIMELINE.map((t, index) => {
                 const timelineId = `${t.year}-${t.title}`;
                 const isOpen = openTimelineId === timelineId;
+                const isInView = activeTimelineId === timelineId;
                 const images = resolveTimelineImages(t.imageKeys);
                 return (
-                  <div key={`${t.year}-${t.title}-${index}`} className={`timeline-item${t.accent ? " accent" : ""}${isOpen ? " open" : ""}`}>
+                  <div
+                    key={`${t.year}-${t.title}-${index}`}
+                    ref={(element) => {
+                      if (element) timelineItemRefs.current[timelineId] = element;
+                      else delete timelineItemRefs.current[timelineId];
+                    }}
+                    className={`timeline-item${t.accent ? " accent" : ""}${isOpen ? " open" : ""}${isInView ? " in-view" : ""}`}
+                  >
                     <button type="button" className="timeline-head" onClick={() => toggleTimeline(timelineId)} aria-expanded={isOpen}>
                       <div className="timeline-head-main">
                         <div className="timeline-year">{t.year}</div>
@@ -749,18 +936,20 @@ export default function AboutMe() {
                     </button>
 
                     <div className={`timeline-panel${isOpen ? " open" : ""}`}>
-                      <div className="timeline-project-card">
-                        <div className="timeline-project-thumb">
-                          <TimelineMediaCarousel images={images} title={t.title} />
-                          <span className="timeline-project-tag">{t.cardTag}</span>
-                        </div>
-                        <div className="timeline-project-body">
-                          <div className="timeline-project-title">{t.title}</div>
-                          <div className="timeline-project-desc">{t.desc}</div>
-                          <div className="timeline-project-chips">
-                            {t.chips.map((chip) => (
-                              <span key={`${t.title}-${chip}`} className="timeline-project-chip">{chip}</span>
-                            ))}
+                      <div className="timeline-panel-inner">
+                        <div className="timeline-project-card">
+                          <div className="timeline-project-thumb">
+                            <TimelineMediaCarousel images={images} title={t.title} />
+                            <span className="timeline-project-tag">{t.cardTag}</span>
+                          </div>
+                          <div className="timeline-project-body">
+                            <div className="timeline-project-title">{t.title}</div>
+                            <div className="timeline-project-desc">{t.desc}</div>
+                            <div className="timeline-project-chips">
+                              {t.chips.map((chip) => (
+                                <span key={`${t.title}-${chip}`} className="timeline-project-chip">{chip}</span>
+                              ))}
+                            </div>
                           </div>
                         </div>
                       </div>
