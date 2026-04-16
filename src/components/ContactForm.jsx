@@ -797,7 +797,7 @@ export default function ContactForm() {
                     <textarea
                       id="message" name="message" rows={5}
                       className={`field-textarea${errors.message && touched.message ? " has-error" : touched.message && !errors.message ? " is-valid" : ""}`}
-                      placeholder="Xin chào Tâm, mình muốn hỏi về..."
+                      placeholder="Xin chào, mình muốn hỏi về..."
                       value={fields.message}
                       onChange={handleChange}
                       onBlur={handleBlur}

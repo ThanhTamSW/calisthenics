@@ -1,4 +1,5 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
+import "./AboutMe.css";
 import useScrollReveal from "../hooks/useScrollReveal";
 
 // ============================================================
@@ -92,15 +93,14 @@ const INTERESTS = [
   { emoji: "\u{1F3AC}", label: "Chia sẻ hành trình" },
 ];
 
-const TIMELINE_IMAGE_MODULES = import.meta.glob("../../images/*.{png,jpg,jpeg,webp,avif,gif,svg}", {
-  eager: true,
+const TIMELINE_IMAGE_MODULES = import.meta.glob("../../images/{BOT_II,giamkhao,giamkhao_1,giamkhao_2,giamkhao_3,giamkhao_4,premium1_1,premium1_2,premium1_3,premium1_4,premium1_5,premium2_1,premium2_2,premium2_3,southern_1,ultimateZ_1,ultimateZ_2,championship_1}.{png,jpg,jpeg,webp,avif,gif,svg}", {
   import: "default",
 });
 
-const TIMELINE_IMAGE_LOOKUP = Object.entries(TIMELINE_IMAGE_MODULES).reduce((acc, [path, url]) => {
+const TIMELINE_IMAGE_LOADERS = Object.entries(TIMELINE_IMAGE_MODULES).reduce((acc, [path, loader]) => {
   const fileName = path.split("/").pop() || "";
   const baseName = fileName.replace(/\.[^.]+$/, "");
-  acc[baseName] = url;
+  acc[baseName] = loader;
   return acc;
 }, {});
 
@@ -117,10 +117,12 @@ const TIMELINE_IMAGE_FOCUS = {
   BOT_II: "center 22%",
 };
 
-function resolveTimelineImages(imageKeys = []) {
+const getTimelineId = (timelineItem) => `${timelineItem.year}-${timelineItem.title}`;
+
+function resolveTimelineImages(imageKeys = [], imageLookup = {}) {
   return imageKeys
     .map((key) => {
-      const src = TIMELINE_IMAGE_LOOKUP[key] || "";
+      const src = imageLookup[key] || "";
       if (!src) return null;
       return {
         src,
@@ -217,6 +219,7 @@ function TimelineMediaCarousel({ images, title }) {
 export default function AboutMe() {
   const [openTimelineId, setOpenTimelineId] = useState("");
   const [activeTimelineId, setActiveTimelineId] = useState("");
+  const [timelineImageLookup, setTimelineImageLookup] = useState({});
   const headerLeftRef = useScrollReveal();
   const headerRightRef = useScrollReveal();
   const cardsRef = useScrollReveal();
@@ -270,589 +273,46 @@ export default function AboutMe() {
     };
   }, []);
 
+
+  const loadTimelineImages = useCallback(async (imageKeys = []) => {
+    const keysToLoad = imageKeys.filter((key) => key && !timelineImageLookup[key] && TIMELINE_IMAGE_LOADERS[key]);
+    if (keysToLoad.length === 0) return;
+
+    const loadedEntries = await Promise.all(
+      keysToLoad.map(async (key) => {
+        try {
+          const url = await TIMELINE_IMAGE_LOADERS[key]();
+          return [key, url];
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    const safeEntries = loadedEntries.filter(Boolean);
+    if (safeEntries.length === 0) return;
+
+    setTimelineImageLookup((current) => ({
+      ...current,
+      ...Object.fromEntries(safeEntries),
+    }));
+  }, [timelineImageLookup]);
+
+  useEffect(() => {
+    const activeTimeline = TIMELINE.find((item) => getTimelineId(item) === activeTimelineId);
+    if (!activeTimeline) return;
+    loadTimelineImages(activeTimeline.imageKeys);
+  }, [activeTimelineId, loadTimelineImages]);
   const toggleTimeline = (id) => {
+    const timelineItem = TIMELINE.find((item) => getTimelineId(item) === id);
+    if (timelineItem) {
+      loadTimelineImages(timelineItem.imageKeys);
+    }
     setOpenTimelineId((current) => (current === id ? "" : id));
   };
 
   return (
     <>
-      <style>{`
-
-        @keyframes fadeUp {
-          from { opacity:0; transform:translateY(24px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-        @keyframes float {
-          0%,100% { transform:translateY(0); }
-          50%      { transform:translateY(-8px); }
-        }
-        @keyframes timelineFadeIn {
-          from { opacity: 0; transform: scale(1.01); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes timelineFadeOut {
-          from { opacity: 1; transform: scale(1); }
-          to { opacity: 0; transform: scale(1.01); }
-        }
-        @keyframes timelinePointPop {
-          0% { transform: translateX(0) scale(1); }
-          60% { transform: translateX(3px) scale(1.95); }
-          100% { transform: translateX(2px) scale(1.55); }
-        }
-        @keyframes timelinePointPulse {
-          0%, 100% { transform: translateX(2px) scale(1); opacity: 0.5; }
-          50% { transform: translateX(2px) scale(1.22); opacity: 0.15; }
-        }
-
-        .about-section {
-          background: var(--bg);
-          padding: clamp(72px, 8vw, 100px) clamp(16px, 4vw, 48px);
-          font-family: 'Inter', sans-serif;
-          color: var(--fg);
-          transition: background 0.4s, color 0.4s;
-        }
-
-        .about-inner {
-          max-width: 1100px;
-          margin: 0 auto;
-        }
-
-        /* -- HEADER -- */
-        .about-header {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: clamp(28px, 6vw, 80px);
-          align-items: center;
-          margin-bottom: 80px;
-          animation: fadeUp 0.7s 0.1s both;
-        }
-
-        .section-tag {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 0.72rem;
-          font-weight: 500;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--accent);
-          margin-bottom: 20px;
-        }
-        .section-tag::before {
-          content: '';
-          width: 24px; height: 1.5px;
-          background: var(--accent);
-        }
-
-        .about-heading {
-          font-family: 'Space Grotesk', sans-serif;
-          font-weight: 800;
-          font-size: clamp(2.2rem, 4vw, 3.2rem);
-          line-height: 1.0;
-          letter-spacing: -0.04em;
-          margin-bottom: 24px;
-        }
-        .about-heading em {
-          font-style: normal;
-          color: var(--accent);
-        }
-
-        .about-bio {
-          font-size: 0.95rem;
-          font-weight: 300;
-          line-height: 1.85;
-          color: var(--fg2);
-        }
-        .about-bio p + p { margin-top: 16px; }
-        .about-bio strong { color: var(--fg); font-weight: 500; }
-
-        /* Interests chips */
-        .interests {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          margin-top: 28px;
-        }
-        .interest-chip {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          background: var(--bg2);
-          border: 1px solid var(--border);
-          border-radius: 999px;
-          padding: 7px 14px;
-          font-size: 0.8rem;
-          font-weight: 500;
-          color: var(--fg);
-          transition: border-color 0.2s, transform 0.2s;
-        }
-        .interest-chip:hover {
-          border-color: var(--accent);
-          transform: translateY(-2px);
-        }
-
-        /* -- CARD GRID -- */
-        .about-cards {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          margin-bottom: 64px;
-          animation: fadeUp 0.7s 0.2s both;
-        }
-        .about-card {
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: 20px;
-          padding: 28px;
-          backdrop-filter: blur(8px);
-          transition: border-color 0.2s, transform 0.2s;
-        }
-        .about-card:hover {
-          border-color: var(--accent);
-          transform: translateY(-4px);
-        }
-        .card-icon {
-          font-size: 1.8rem;
-          margin-bottom: 12px;
-          display: block;
-          animation: float 4s ease-in-out infinite;
-        }
-        .card-num {
-          font-family: 'Space Grotesk', sans-serif;
-          font-size: 2rem;
-          font-weight: 800;
-          color: var(--accent);
-          letter-spacing: -0.04em;
-          line-height: 1;
-          margin-bottom: 4px;
-        }
-        .card-label {
-          font-size: 0.8rem;
-          color: var(--fg2);
-          font-weight: 400;
-        }
-
-        /* -- TABS -- */
-        .tabs-wrap {
-          animation: fadeUp 0.7s 0.3s both;
-          overflow: visible;
-        }
-
-        .tab-list {
-          display: flex;
-          gap: 4px;
-          background: var(--bg2);
-          border-radius: 14px;
-          padding: 4px;
-          margin-bottom: 32px;
-          width: fit-content;
-          max-width: 100%;
-          overflow-x: auto;
-          scrollbar-width: none;
-        }
-        .tab-list::-webkit-scrollbar { display: none; }
-        .tab-btn {
-          font-family: 'Inter', sans-serif;
-          font-size: 0.82rem;
-          font-weight: 500;
-          padding: 9px 20px;
-          border-radius: 10px;
-          border: none;
-          cursor: pointer;
-          background: transparent;
-          color: var(--fg2);
-          transition: background 0.2s, color 0.2s;
-          white-space: nowrap;
-        }
-        .tab-btn.active {
-          background: var(--accent);
-          color: #fff;
-        }
-
-        /* Timeline */
-        .timeline {
-          position: relative;
-          padding-left: 28px;
-          padding-right: 14px;
-          overflow: visible;
-        }
-        .timeline::before {
-          content: '';
-          position: absolute;
-          left: 6px; top: 8px; bottom: 8px;
-          width: 1.5px;
-          background: var(--border);
-        }
-        .timeline-item {
-          position: relative;
-          margin-bottom: 20px;
-          --timeline-panel-shift: clamp(14px, 1.8vw, 22px);
-          --timeline-panel-scale: 1.015;
-        }
-        .timeline-item::before {
-          content: '';
-          position: absolute;
-          left: -25px; top: 14px;
-          width: 10px; height: 10px;
-          border-radius: 50%;
-          background: var(--bg2);
-          border: 2px solid var(--border);
-          transform: scale(1);
-          z-index: 2;
-          transition: background 0.24s, border-color 0.24s, box-shadow 0.24s, transform 0.24s;
-        }
-        .timeline-item::after {
-          content: '';
-          position: absolute;
-          left: -32px;
-          top: 7px;
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          border: 1px solid rgba(255,107,53,0.5);
-          background: radial-gradient(circle, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0) 70%);
-          opacity: 0;
-          transform: scale(0.85);
-          pointer-events: none;
-          z-index: 1;
-          transition: opacity 0.2s ease;
-        }
-        .timeline-item.accent::before,
-        .timeline-item.open::before,
-        .timeline-item.in-view::before {
-          background: var(--accent);
-          border-color: var(--accent);
-          box-shadow: 0 0 0 4px rgba(255,107,53,0.15);
-        }
-        .timeline-item.in-view::before {
-          transform: translateX(2px) scale(1.55);
-          box-shadow: 0 0 0 5px rgba(255,107,53,0.16), 0 0 14px rgba(255,107,53,0.46);
-          animation: timelinePointPop 0.34s cubic-bezier(0.2, 0.85, 0.24, 1) both;
-        }
-        .timeline-item.in-view::after {
-          opacity: 1;
-          animation: timelinePointPulse 1.6s ease-in-out infinite;
-        }
-        .timeline-head {
-          width: 100%;
-          border: none;
-          background: transparent;
-          color: inherit;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-          cursor: pointer;
-          text-align: left;
-          padding: 4px 0;
-        }
-        .timeline-head-main {
-          flex: 1;
-          min-width: 0;
-          transform-origin: left center;
-          transition: transform 0.28s cubic-bezier(0.2, 0.85, 0.24, 1), color 0.24s ease;
-        }
-        .timeline-year {
-          font-family: 'Space Grotesk', sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          color: var(--accent);
-          margin-bottom: 4px;
-          transition: color 0.24s ease, transform 0.24s ease;
-        }
-        .timeline-title {
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: var(--fg);
-          line-height: 1.4;
-          transition: color 0.24s ease, transform 0.24s ease;
-        }
-        .timeline-chevron {
-          width: 28px;
-          height: 28px;
-          border-radius: 999px;
-          border: 1px solid var(--border);
-          background: var(--bg2);
-          color: var(--fg2);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 0.95rem;
-          flex-shrink: 0;
-          transition: transform 0.2s ease, color 0.2s, border-color 0.2s;
-        }
-        .timeline-item.open .timeline-chevron {
-          transform: rotate(90deg);
-          color: var(--accent);
-          border-color: var(--accent);
-        }
-        .timeline-item.in-view .timeline-head-main {
-          transform: translateX(clamp(14px, 1.8vw, 22px)) scale(1.04);
-        }
-        .timeline-item.in-view .timeline-year,
-        .timeline-item.in-view .timeline-title {
-          transform: translateX(1px);
-        }
-        .timeline-item.in-view .timeline-title {
-          color: color-mix(in srgb, var(--accent) 86%, #fff);
-        }
-        .timeline-item.in-view .timeline-chevron {
-          color: var(--accent);
-          border-color: rgba(255,107,53,0.45);
-          transform: translateX(5px);
-        }
-        .timeline-item.open.in-view .timeline-chevron {
-          transform: rotate(90deg) translateX(5px);
-        }
-        @media (hover: hover) and (pointer: fine) {
-          .timeline-item:hover::before {
-            transform: translateX(2px) scale(1.55);
-            box-shadow: 0 0 0 5px rgba(255,107,53,0.16), 0 0 14px rgba(255,107,53,0.46);
-            animation: timelinePointPop 0.34s cubic-bezier(0.2, 0.85, 0.24, 1) both;
-          }
-          .timeline-item:hover::after {
-            opacity: 1;
-            animation: timelinePointPulse 1.6s ease-in-out infinite;
-          }
-          .timeline-item:hover .timeline-head-main {
-            transform: translateX(clamp(14px, 1.8vw, 22px)) scale(1.04);
-          }
-          .timeline-item:hover .timeline-year,
-          .timeline-item:hover .timeline-title {
-            transform: translateX(1px);
-          }
-          .timeline-item:hover .timeline-title {
-            color: color-mix(in srgb, var(--accent) 86%, #fff);
-          }
-          .timeline-item:hover .timeline-chevron {
-            color: var(--accent);
-            border-color: rgba(255,107,53,0.45);
-            transform: translateX(5px);
-          }
-          .timeline-item.open:hover .timeline-chevron {
-            transform: rotate(90deg) translateX(5px);
-          }
-          .timeline-item:hover .timeline-panel.open {
-            transform: translateY(0) translateX(var(--timeline-panel-shift)) scale(var(--timeline-panel-scale));
-          }
-          .timeline-item:hover .timeline-project-card {
-            border-color: rgba(255,107,53,0.4);
-            box-shadow: 0 10px 24px rgba(255,107,53,0.12);
-          }
-        }
-        .timeline-panel {
-          display: grid;
-          grid-template-rows: 0fr;
-          opacity: 0;
-          overflow: hidden;
-          transform: translateY(-4px);
-          margin-top: 0;
-          transition:
-            grid-template-rows 0.42s cubic-bezier(0.22, 1, 0.36, 1),
-            opacity 0.26s ease,
-            transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-            margin-top 0.28s ease;
-          will-change: grid-template-rows, opacity, transform;
-        }
-        .timeline-panel-inner {
-          min-height: 0;
-          overflow: hidden;
-        }
-        .timeline-panel.open {
-          grid-template-rows: 1fr;
-          opacity: 1;
-          transform: translateY(0);
-          margin-top: 8px;
-          transform-origin: left top;
-        }
-        .timeline-item.in-view .timeline-panel.open {
-          transform: translateY(0) translateX(var(--timeline-panel-shift)) scale(var(--timeline-panel-scale));
-        }
-        .timeline-desc {
-          font-size: 0.85rem;
-          font-weight: 300;
-          color: var(--fg2);
-          line-height: 1.65;
-          margin-bottom: 12px;
-        }
-        .timeline-project-card {
-          margin-top: 14px;
-          width: 100%;
-          max-width: 860px;
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          overflow: hidden;
-          transition: border-color 0.2s, transform 0.2s, box-shadow 0.24s ease;
-        }
-        .timeline-project-card:hover {
-          border-color: var(--accent);
-          transform: translateY(-2px);
-        }
-        .timeline-item.in-view .timeline-project-card {
-          border-color: rgba(255,107,53,0.4);
-          box-shadow: 0 10px 24px rgba(255,107,53,0.12);
-        }
-        .timeline-project-thumb {
-          position: relative;
-          height: clamp(250px, 32vw, 360px);
-          background: linear-gradient(135deg, var(--bg2), var(--bg));
-          overflow: hidden;
-          transform: translateZ(0);
-        }
-        .timeline-project-image {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center 32%;
-          display: block;
-          backface-visibility: hidden;
-        }
-        .timeline-project-image.active {
-          z-index: 2;
-          animation: timelineFadeIn ${TIMELINE_CAROUSEL_TRANSITION_MS}ms ease both;
-        }
-        .timeline-project-image.previous {
-          z-index: 1;
-          animation: timelineFadeOut ${TIMELINE_CAROUSEL_TRANSITION_MS}ms ease both;
-        }
-        .timeline-project-placeholder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: var(--fg2);
-          opacity: 0.45;
-        }
-        .timeline-project-tag {
-          position: absolute;
-          right: 10px;
-          bottom: 10px;
-          font-size: 0.66rem;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          font-weight: 700;
-          color: #fff;
-          background: rgba(0, 0, 0, 0.55);
-          padding: 4px 9px;
-          border-radius: 999px;
-          backdrop-filter: blur(4px);
-          z-index: 3;
-        }
-        .timeline-project-dots {
-          position: absolute;
-          left: 50%;
-          bottom: 10px;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 6px;
-          z-index: 3;
-        }
-        .timeline-project-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 999px;
-          border: 0;
-          padding: 0;
-          background: rgba(255,255,255,0.45);
-          cursor: pointer;
-          transition: width 0.2s ease, background 0.2s ease;
-        }
-        .timeline-project-dot.active {
-          width: 14px;
-          background: #fff;
-        }
-        .timeline-project-body {
-          padding: 14px;
-        }
-        .timeline-project-title {
-          font-size: 0.92rem;
-          font-weight: 700;
-          color: var(--fg);
-          margin-bottom: 6px;
-        }
-        .timeline-project-desc {
-          font-size: 0.8rem;
-          line-height: 1.65;
-          color: var(--fg2);
-          margin-bottom: 12px;
-        }
-        .timeline-project-chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-        }
-        .timeline-project-chip {
-          font-size: 0.7rem;
-          font-weight: 500;
-          color: var(--accent);
-          background: rgba(255,107,53,0.10);
-          border: 1px solid rgba(255,107,53,0.20);
-          border-radius: 6px;
-          padding: 3px 8px;
-        }
-
-        /* -- RESPONSIVE -- */
-        @media (max-width: 860px) {
-          .about-section { padding: 72px 24px; }
-          .about-header {
-            grid-template-columns: 1fr;
-            gap: 32px;
-            margin-bottom: 48px;
-          }
-          .about-cards { grid-template-columns: 1fr 1fr; }
-        }
-        @media (max-width: 640px) {
-          .about-section { padding: 64px 16px; }
-          .about-header {
-            gap: 24px;
-            margin-bottom: 36px;
-          }
-          .about-heading {
-            font-size: clamp(1.9rem, 9vw, 2.6rem);
-            line-height: 1.05;
-            margin-bottom: 14px;
-          }
-          .about-bio { font-size: 0.9rem; line-height: 1.75; }
-          .about-cards {
-            gap: 12px;
-            margin-bottom: 40px;
-          }
-          .about-card { padding: 20px; border-radius: 16px; }
-          .card-icon { font-size: 1.5rem; margin-bottom: 8px; }
-          .card-num { font-size: 1.7rem; }
-          .interests { gap: 8px; margin-top: 20px; }
-          .interest-chip {
-            padding: 6px 12px;
-            font-size: 0.75rem;
-          }
-          .tab-list { padding: 3px; }
-          .tab-btn { padding: 8px 14px; font-size: 0.78rem; }
-          .timeline-item.in-view .timeline-head-main {
-            transform: translateX(10px) scale(1.02);
-          }
-          .timeline-item { --timeline-panel-shift: 10px; --timeline-panel-scale: 1.008; }
-          .timeline-project-thumb { height: 180px; }
-          .timeline-project-body { padding: 12px; }
-          .timeline-project-title { font-size: 0.88rem; }
-          .timeline-project-desc { font-size: 0.78rem; }
-        }
-        @media (max-width: 420px) {
-          .about-section { padding: 56px 14px; }
-          .about-cards { grid-template-columns: 1fr; gap: 10px; }
-          .about-header { margin-bottom: 28px; }
-          .tab-btn { padding: 7px 12px; font-size: 0.75rem; }
-          .timeline-item.in-view .timeline-head-main {
-            transform: translateX(8px) scale(1.01);
-          }
-          .timeline-item { --timeline-panel-shift: 8px; --timeline-panel-scale: 1.004; }
-        }
-      `}</style>
-
       <section className="about-section" id="about">
         <div className="about-inner">
 
@@ -914,10 +374,11 @@ export default function AboutMe() {
 
             <div className="timeline">
               {TIMELINE.map((t, index) => {
-                const timelineId = `${t.year}-${t.title}`;
+                const timelineId = getTimelineId(t);
                 const isOpen = openTimelineId === timelineId;
                 const isInView = activeTimelineId === timelineId;
-                const images = resolveTimelineImages(t.imageKeys);
+                const images = resolveTimelineImages(t.imageKeys, timelineImageLookup);
+                const hasConfiguredImages = t.imageKeys.length > 0;
                 return (
                   <div
                     key={`${t.year}-${t.title}-${index}`}
@@ -938,14 +399,17 @@ export default function AboutMe() {
                     <div className={`timeline-panel${isOpen ? " open" : ""}`}>
                       <div className="timeline-panel-inner">
                         <div className="timeline-project-card">
-                          <div className="timeline-project-thumb">
-                            <TimelineMediaCarousel images={images} title={t.title} />
-                            <span className="timeline-project-tag">{t.cardTag}</span>
-                          </div>
+                          {hasConfiguredImages ? (
+                            <div className="timeline-project-thumb">
+                              <TimelineMediaCarousel images={images} title={t.title} />
+                              <span className="timeline-project-tag">{t.cardTag}</span>
+                            </div>
+                          ) : null}
                           <div className="timeline-project-body">
                             <div className="timeline-project-title">{t.title}</div>
                             <div className="timeline-project-desc">{t.desc}</div>
                             <div className="timeline-project-chips">
+                              {!hasConfiguredImages ? <span className="timeline-project-chip">{t.cardTag}</span> : null}
                               {t.chips.map((chip) => (
                                 <span key={`${t.title}-${chip}`} className="timeline-project-chip">{chip}</span>
                               ))}
@@ -965,6 +429,10 @@ export default function AboutMe() {
     </>
   );
 }
+
+
+
+
 
 
 
