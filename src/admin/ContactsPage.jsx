@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adminApi } from "./auth";
 
 const STATUS_OPTIONS = ["all", "new", "read", "replied"];
@@ -10,7 +10,7 @@ export default function ContactsPage() {
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState(0);
 
-  const loadContacts = async (nextFilter = filter) => {
+  const loadContacts = useCallback(async (nextFilter) => {
     setLoading(true);
     setError("");
     try {
@@ -21,11 +21,11 @@ export default function ContactsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadContacts(filter);
-  }, [filter]);
+  }, [filter, loadContacts]);
 
   const updateStatus = async (id, status) => {
     setUpdatingId(id);
@@ -114,4 +114,3 @@ export default function ContactsPage() {
     </section>
   );
 }
-
