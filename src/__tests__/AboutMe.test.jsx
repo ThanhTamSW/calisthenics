@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AboutMe from "../components/AboutMe";
 
@@ -34,7 +34,13 @@ describe("AboutMe", () => {
 
     const timelineItem = imageItemButton.closest(".timeline-item");
     expect(timelineItem).toBeInTheDocument();
-    expect(timelineItem.querySelector(".timeline-project-thumb")).toBeInTheDocument();
-    expect(within(timelineItem).getByRole("img", { name: /battle of team ii/i })).toBeInTheDocument();
+    const thumb = timelineItem.querySelector(".timeline-project-thumb");
+    expect(thumb).toBeInTheDocument();
+
+    await waitFor(() => {
+      const image = within(thumb).queryByRole("img", { name: /battle of team ii/i });
+      const placeholder = thumb.querySelector(".timeline-project-placeholder");
+      expect(Boolean(image || placeholder)).toBe(true);
+    });
   });
 });

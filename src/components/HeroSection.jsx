@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
 import "./HeroSection.css";
+import { getImageSrcSetConfig } from "../utils/imageOptimization";
 
 // ============================================================
 // HERO SECTION - Tam Calisthenics
@@ -12,26 +13,20 @@ const PROFILE_IMAGE_ALT_TEXT = {
   profile2: "Nguyen Thanh Tam luyen ky nang calisthenics voi dong tac can bang",
   profile3: "Chan dung Nguyen Thanh Tam trong buoi tap street workout",
 };
-const PROFILE_IMAGE_MODULES = import.meta.glob("../../images/profile*.{png,jpg,jpeg,webp,avif,gif,svg}", {
-  eager: true,
-  import: "default",
-});
 
-const PROFILE_IMAGES = Object.entries(PROFILE_IMAGE_MODULES)
-  .sort(([aPath], [bPath]) => {
-    const aName = aPath.split("/").pop() || "";
-    const bName = bPath.split("/").pop() || "";
-    return aName.localeCompare(bName, undefined, { numeric: true, sensitivity: "base" });
-  })
-  .map(([path, url]) => {
-    const fileName = path.split("/").pop() || "";
-    const baseName = fileName.replace(/\.[^.]+$/, "");
-    return {
-      src: url,
-      alt: PROFILE_IMAGE_ALT_TEXT[baseName] || "Chan dung Nguyen Thanh Tam trong buoi tap calisthenics",
-    };
-  });
-export default function HeroSection({ dark, onToggle }) {
+// Load only profile image metadata, not images themselves
+const PROFILE_IMAGE_NAMES = ['profile1', 'profile2', 'profile3'];
+
+const PROFILE_IMAGES = PROFILE_IMAGE_NAMES.map((baseName) => {
+  const srcSetConfig = getImageSrcSetConfig(baseName);
+  return {
+    baseName,
+    srcSet: srcSetConfig,
+    alt: PROFILE_IMAGE_ALT_TEXT[baseName] || "Chan dung Nguyen Thanh Tam trong buoi tap calisthenics",
+    fallback: `./images/${baseName}-full.jpg`,
+  };
+});
+export default function HeroSection() {
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [avatarPrevIndex, setAvatarPrevIndex] = useState(null);
   const hasAvatarCarousel = PROFILE_IMAGES.length > 1;
@@ -69,13 +64,29 @@ export default function HeroSection({ dark, onToggle }) {
   useEffect(() => {
     if (!hasAvatarCarousel) return;
 
+    // Preload only the next image (not all)
     const nextIndex = (avatarIndex + 1) % PROFILE_IMAGES.length;
-    const image = new Image();
-    image.decoding = "async";
-    image.src = PROFILE_IMAGES[nextIndex].src;
-    if (typeof image.decode === "function") {
-      image.decode().catch(() => {});
-    }
+    const nextImage = PROFILE_IMAGES[nextIndex];
+
+    // Create a hidden link tag to preload the next image variants
+    const preloadAVIF = document.createElement('link');
+    preloadAVIF.rel = 'preload';
+    preloadAVIF.as = 'image';
+    preloadAVIF.type = 'image/avif';
+    preloadAVIF.imagesrcset = nextImage.srcSet.avif;
+    document.head.appendChild(preloadAVIF);
+
+    const preloadWebP = document.createElement('link');
+    preloadWebP.rel = 'preload';
+    preloadWebP.as = 'image';
+    preloadWebP.type = 'image/webp';
+    preloadWebP.imagesrcset = nextImage.srcSet.webp;
+    document.head.appendChild(preloadWebP);
+
+    return () => {
+      document.head.removeChild(preloadAVIF);
+      document.head.removeChild(preloadWebP);
+    };
   }, [avatarIndex, hasAvatarCarousel]);
 
   useEffect(() => {
@@ -209,25 +220,28 @@ export default function HeroSection({ dark, onToggle }) {
                 {PROFILE_IMAGES.length > 0 ? (
                   <>
                     {avatarPrevIndex !== null && PROFILE_IMAGES[avatarPrevIndex] ? (
-                      <img
-                        key={`avatar-prev-${avatarPrevIndex}-${avatarIndex}`}
-                        src={PROFILE_IMAGES[avatarPrevIndex].src}
-                        alt=""
-                        aria-hidden="true"
-                        className="avatar-slide previous"
-                        loading="lazy"
-                        decoding="async"
-                      />
+                      <picture key={`avatar-prev-${avatarPrevIndex}-${avatarIndex}`} className="avatar-slide previous" aria-hidden="true">
+                        <source srcSet={PROFILE_IMAGES[avatarPrevIndex].srcSet.avif} type="image/avif" />
+                        <source srcSet={PROFILE_IMAGES[avatarPrevIndex].srcSet.webp} type="image/webp" />
+                        <img
+                          src={PROFILE_IMAGES[avatarPrevIndex].fallback}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </picture>
                     ) : null}
-                    <img
-                      key={`avatar-active-${avatarIndex}`}
-                      src={PROFILE_IMAGES[avatarIndex].src}
-                      alt={PROFILE_IMAGES[avatarIndex].alt}
-                      className="avatar-slide active"
-                      loading="eager"
-                      decoding="async"
-                      fetchpriority={avatarIndex === 0 ? "high" : "auto"}
-                    />
+                    <picture key={`avatar-active-${avatarIndex}`} className="avatar-slide active">
+                      <source srcSet={PROFILE_IMAGES[avatarIndex].srcSet.avif} type="image/avif" />
+                      <source srcSet={PROFILE_IMAGES[avatarIndex].srcSet.webp} type="image/webp" />
+                      <img
+                        src={PROFILE_IMAGES[avatarIndex].fallback}
+                        alt={PROFILE_IMAGES[avatarIndex].alt}
+                        loading={avatarIndex === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                        fetchpriority={avatarIndex === 0 ? "high" : "auto"}
+                      />
+                    </picture>
                   </>
                 ) : (
                   <div className="avatar-placeholder">
@@ -274,7 +288,5 @@ export default function HeroSection({ dark, onToggle }) {
     </>
   );
 }
-
-
 
 

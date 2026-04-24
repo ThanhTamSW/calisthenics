@@ -1,0 +1,8 @@
+dist
+node_modules
+vendor
+images
+images/optimized
+test-results
+playwright-report
+package-lock.json

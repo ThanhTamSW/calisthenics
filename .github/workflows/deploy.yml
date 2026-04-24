@@ -21,7 +21,9 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-      - run: npm install
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:unit -- --run
       - run: npm run build
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
