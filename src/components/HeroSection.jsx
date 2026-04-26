@@ -208,9 +208,15 @@ export default function HeroSection() {
               {/* Social pill */}
               <div className="social-pill">
                 <div className="social-pill-icons">
-                  <a href="https://tiktok.com/@tamcalisthenics" target="_blank" rel="noreferrer">Tt</a>
-                  <a href="https://www.facebook.com/profile.php?id=61576483281888&locale=vi_VN" target="_blank" rel="noreferrer">Fb</a>
-                  <a href="mailto:ngthanhtam21.work@gmail.com">@</a>
+                  <a href="https://tiktok.com/@tamcalisthenics" target="_blank" rel="noreferrer" aria-label="Theo dõi TikTok của Tâm">
+                    Tt
+                  </a>
+                  <a href="https://www.facebook.com/profile.php?id=61576483281888&locale=vi_VN" target="_blank" rel="noreferrer" aria-label="Theo dõi Facebook của Tâm">
+                    Fb
+                  </a>
+                  <a href="mailto:ngthanhtam21.work@gmail.com" aria-label="Gửi email cho Tâm">
+                    @
+                  </a>
                 </div>
                 <span className="social-pill-label">Theo dõi mình</span>
               </div>
@@ -255,10 +261,10 @@ export default function HeroSection() {
 
                 {hasAvatarCarousel && (
                   <>
-                    <button type="button" className="avatar-carousel-nav prev" onClick={goPrevAvatar} aria-label="Previous image">
+                    <button type="button" className="avatar-carousel-nav prev" onClick={goPrevAvatar} aria-label="Ảnh trước">
                       {"<"}
                     </button>
-                    <button type="button" className="avatar-carousel-nav next" onClick={goNextAvatar} aria-label="Next image">
+                    <button type="button" className="avatar-carousel-nav next" onClick={goNextAvatar} aria-label="Ảnh tiếp theo">
                       {">"}
                     </button>
                     <div className="avatar-carousel-dots">
@@ -288,5 +294,3 @@ export default function HeroSection() {
     </>
   );
 }
-
-

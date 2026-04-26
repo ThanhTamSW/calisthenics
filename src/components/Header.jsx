@@ -3,6 +3,7 @@
 const NAV_LINKS = [
   { label: "Về mình", href: "#about" },
   { label: "Hành trình", href: "#journey" },
+  { label: "Portfolio", href: "#portfolio" },
   { label: "Liên hệ", href: "#contact" },
 ];
 
