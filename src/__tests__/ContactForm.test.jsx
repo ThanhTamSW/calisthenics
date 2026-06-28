@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { act } from "react";
 import ContactForm from "../components/ContactForm";
+import { LanguageProvider } from "../contexts/LanguageContext";
 
 describe("ContactForm", () => {
   const fillRequired = async () => {
@@ -14,7 +15,11 @@ describe("ContactForm", () => {
   };
 
   it("hiển thị lỗi validate khi submit trống", async () => {
-    render(<ContactForm />);
+    render(
+      <LanguageProvider>
+        <ContactForm />
+      </LanguageProvider>
+    );
     const submit = screen.getByRole("button", { name: /gửi tin nhắn/i });
     await act(async () => {
       await userEvent.click(submit);
@@ -35,7 +40,11 @@ describe("ContactForm", () => {
     });
     vi.stubGlobal("fetch", mockFetch);
 
-    render(<ContactForm />);
+    render(
+      <LanguageProvider>
+        <ContactForm />
+      </LanguageProvider>
+    );
     await fillRequired();
     await act(async () => {
       await userEvent.click(screen.getByRole("button", { name: /gửi tin nhắn/i }));
@@ -55,7 +64,11 @@ describe("ContactForm", () => {
     });
     vi.stubGlobal("fetch", mockFetch);
 
-    render(<ContactForm />);
+    render(
+      <LanguageProvider>
+        <ContactForm />
+      </LanguageProvider>
+    );
     await fillRequired();
     await act(async () => {
       await userEvent.click(screen.getByRole("button", { name: /gửi tin nhắn/i }));

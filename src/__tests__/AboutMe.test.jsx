@@ -1,10 +1,15 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AboutMe from "../components/AboutMe";
+import { LanguageProvider } from "../contexts/LanguageContext";
 
-describe("AboutMe", () => {
-  it("toggle mo dong timeline va hien thi chips cho moc khong co anh", async () => {
-    render(<AboutMe />);
+describe("AboutMe component", () => {
+  it("render phan gioi thieu va tab", async () => {
+    render(
+      <LanguageProvider>
+        <AboutMe />
+      </LanguageProvider>
+    );
 
     const timelineTitle = screen
       .getAllByText(/bắt đầu hành trình calisthenics/i)
@@ -23,8 +28,12 @@ describe("AboutMe", () => {
     expect(within(timelineItem).getByText(/^hành trình$/i)).toBeInTheDocument();
   });
 
-  it("mo moc co anh se hien thi thumb va anh timeline", async () => {
-    render(<AboutMe />);
+  it("cho phep chuyen doi qua tab thanh tich (portfolio)", async () => {
+    render(
+      <LanguageProvider>
+        <AboutMe />
+      </LanguageProvider>
+    );
 
     const imageItemButton = screen.getByRole("button", {
       name: /30\/03\/2025\s*battle of team ii/i,
