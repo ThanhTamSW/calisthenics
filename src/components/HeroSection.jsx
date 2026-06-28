@@ -23,7 +23,7 @@ const PROFILE_IMAGES = PROFILE_IMAGE_NAMES.map((baseName) => {
     baseName,
     srcSet: srcSetConfig,
     alt: PROFILE_IMAGE_ALT_TEXT[baseName] || "Chan dung Nguyen Thanh Tam trong buoi tap calisthenics",
-    fallback: `./images/${baseName}-full.jpg`,
+    fallback: `/images/${baseName}-full.jpg`,
   };
 });
 

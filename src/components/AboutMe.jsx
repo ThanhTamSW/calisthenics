@@ -96,7 +96,7 @@ const INTERESTS = [
 ];
 
 // Non-eager loading: images will be loaded only when needed
-const TIMELINE_IMAGE_MODULES = import.meta.glob("../../images/{BOT_II,giamkhao,giamkhao_1,giamkhao_2,giamkhao_3,giamkhao_4,premium1_1,premium1_2,premium1_3,premium1_4,premium1_5,premium2_1,premium2_2,premium2_3,southern_1,ultimateZ_1,ultimateZ_2,championship_1}.{png,jpg,jpeg,webp,avif,gif,svg}", {
+const TIMELINE_IMAGE_MODULES = import.meta.glob("../../public/images/{BOT_II,giamkhao,giamkhao_1,giamkhao_2,giamkhao_3,giamkhao_4,premium1_1,premium1_2,premium1_3,premium1_4,premium1_5,premium2_1,premium2_2,premium2_3,southern_1,ultimateZ_1,ultimateZ_2,championship_1}.{png,jpg,jpeg,webp,avif,gif,svg}", {
   import: "default",
 });
 

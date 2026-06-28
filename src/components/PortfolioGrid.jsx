@@ -95,7 +95,7 @@ const DEFAULT_PORTFOLIO_API_URL = "/api/portfolio.php";
 const PORTFOLIO_API_URL = import.meta.env.VITE_PORTFOLIO_API_URL || DEFAULT_PORTFOLIO_API_URL;
 
 const RAW_IMAGE_MODULES = import.meta.glob(
-  "../../images/*.{png,jpg,jpeg,webp,avif,gif,svg}",
+  "../../public/images/*.{png,jpg,jpeg,webp,avif,gif,svg}",
   {
     eager: true,
     import: "default",
