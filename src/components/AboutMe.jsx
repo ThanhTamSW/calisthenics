@@ -233,8 +233,18 @@ export default function AboutMe() {
 
   // Fetch timeline từ API, fallback về dữ liệu tĩnh nếu thất bại
   useEffect(() => {
+    // Không fetch PHP API nếu đang ở môi trường tĩnh (GitHub Pages)
+    const hostname = window.location.hostname || "";
+    if (hostname.includes("github.io") || hostname.includes("thanhtamnguyen.id.vn")) {
+      return;
+    }
+
     const controller = new AbortController();
     let cancelled = false;
+    
+    // Đặt timeout 2 giây để tránh bị treo trang nếu server phản hồi chậm
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
     fetch("/api/timeline.php", {
       signal: controller.signal,
       headers: { Accept: "application/json" },
@@ -261,13 +271,21 @@ export default function AboutMe() {
           setTimeline(mapped);
         }
       })
-      .catch(() => {
-        if (cancelled) return;
-        // Giữ dữ liệu fallback
+      .catch((err) => {
+        if (err.name === 'AbortError') {
+          console.warn('Timeline API fetch timeout or aborted, using fallback.');
+        } else {
+          console.error("Failed to load timeline from API:", err);
+        }
+      })
+      .finally(() => {
+        clearTimeout(timeoutId);
       });
+
     return () => {
       cancelled = true;
       controller.abort();
+      clearTimeout(timeoutId);
     };
   }, []);
 
