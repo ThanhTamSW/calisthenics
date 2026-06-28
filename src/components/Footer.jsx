@@ -50,6 +50,7 @@ const SOCIAL = [
 const LINKS = [
   { labelKey: "nav_about", href: "#about" },
   { labelKey: "nav_journey", href: "#journey" },
+  { labelKey: "portfolio_tag", href: "#portfolio" },
   { labelKey: "nav_contact", href: "#contact" },
 ];
 

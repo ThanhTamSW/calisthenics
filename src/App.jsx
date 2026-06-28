@@ -6,7 +6,6 @@ import AboutMe from "./components/AboutMe.jsx";
 import PortfolioGrid from "./components/PortfolioGrid";
 import ContactForm from "./components/ContactForm";
 import Footer from "./components/Footer";
-import FloatingContact from "./components/FloatingContact";
 import SeoHead from "./components/SeoHead";
 import AdminLogin from "./admin/AdminLogin";
 import AdminLayout from "./admin/AdminLayout";
@@ -14,7 +13,6 @@ import ProtectedRoute from "./admin/ProtectedRoute";
 import DashboardPage from "./admin/DashboardPage";
 import PortfolioPage from "./admin/PortfolioPage";
 import ContactsPage from "./admin/ContactsPage";
-import TimelinePage from "./admin/TimelinePage";
 
 function PublicSite({ dark, onToggle }) {
   return (
@@ -29,7 +27,6 @@ function PublicSite({ dark, onToggle }) {
         <ContactForm />
       </main>
 
-      <FloatingContact />
       <Footer />
     </>
   );
@@ -72,7 +69,6 @@ export default function App() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="portfolio" element={<PortfolioPage />} />
         <Route path="contacts" element={<ContactsPage />} />
-        <Route path="timeline" element={<TimelinePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

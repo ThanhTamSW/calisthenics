@@ -6,7 +6,7 @@ import "./PortfolioGrid.css";
 // PORTFOLIO GRID - fetch tu /api/portfolio.php
 // ============================================================
 
-const TAGS = ["T?t c?", "Gi?i d?u", "Th�nh t�ch", "Content"];
+const TAGS = ["Tất cả", "Giải đấu", "Thành tích", "Content"];
 
 // Fallback data khi chua co API
 const FALLBACK_PROJECTS = [
@@ -15,7 +15,7 @@ const FALLBACK_PROJECTS = [
     title: "Top 1 Premium Battle",
     description: "Ng�y 20/08/2023, The Premium Battle ch�nh th?c di?n ra v?i b?u kh�ng kh� k?ch t�nh v� d?y dam m� c?a c?ng d?ng calisthenics Vi?t Nam. Gi?i d?u n?i b?t v?i b?ng thi d?u h?p d?n c�ng h? th?ng huy chuong d�nh cho nh?ng v?n d?ng vi�n xu?t s?c nh?t.",
     tech: ["Top 1", "Champion", "Battle"],
-    tag: "Th�nh t�ch",
+    tag: "Thành tích",
     demo: "",
     github: "",
     thumbnail: "",
@@ -26,7 +26,7 @@ const FALLBACK_PROJECTS = [
     title: "SOUTHERN STREET WORKOUT BATTLE 2023",
     description: "Sau th?i gian d�i ?p ?, SOUTHERN STREET WORKOUT BATTLE 2023 ch�nh th?c kh?i tranh. Southern Street Workout ra d?i v?i s? m?nh t? ch?c c�c gi?i d?u v� s? ki?n Street Workout t?i khu v?c mi?n Nam Vi?t Nam. V?i s? d?ng h�nh t? Ashura, Sept Strength Club, shop Ho�ng K? T?ng v� VNSWC, gi?i d?u tr? th�nh ti?n d? d? lan t?a dam m� Street Workout, tinh th?n t?p luy?n v� r�n luy?n s?c kh?e t?i c?ng d?ng.",
     tech: ["Street Workout", "Battle", "2023"],
-    tag: "Gi?i d?u",
+    tag: "Giải đấu",
     demo: "",
     github: "",
     thumbnail: "",
@@ -37,7 +37,7 @@ const FALLBACK_PROJECTS = [
     title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
     description: "Vietnam Street Workout Championship 2023 quy t? v?n d?ng vi�n t? ba mi?n B?c, Trung, Nam. Gi?i d?u hu?ng t?i th�c d?y phong tr�o Calisthenics - Street Workout, k?t n?i c?ng d?ng v� lan t?a tinh th?n vu?t gi?i h?n t?i Vi?t Nam.",
     tech: ["Quoc gia", "Championship", "2023"],
-    tag: "Gi?i d?u",
+    tag: "Giải đấu",
     demo: "",
     github: "",
     thumbnail: "",
@@ -48,7 +48,7 @@ const FALLBACK_PROJECTS = [
     title: "PREMIUM BATTLE II",
     description: "Premium Battle II l� s? ki?n du?c t? ch?c chuy�n nghi?p d�nh cho c?ng d?ng dam m� Calisthenics tr�n kh?p Vi?t Nam. Gi?i d?u quy t? nhi?u t�i nang n?i b?t v?i nh?ng m�n tr�nh di?n d?y ?n tu?ng, s?c m?nh v� k? thu?t. M?c ti�u c?a gi?i l� t�m ra d?i di?n Vi?t Nam tham d? Xia-Long Cup Asia Street Workout Championship t?i ��i Loan v� c� th? l� gi?i SWUB.",
     tech: ["Battle", "Premium", "Comeback"],
-    tag: "Gi?i d?u",
+    tag: "Giải đấu",
     demo: "",
     github: "",
     thumbnail: "",
@@ -59,7 +59,7 @@ const FALLBACK_PROJECTS = [
     title: "Gi�m kh?o - Battle Of Team I",
     description: "�u?c m?i l�m gi�m kh?o t?i gi?i Battle Of Team I. T? v?n d?ng vi�n tr? th�nh ngu?i d�nh gi�.",
     tech: ["Giam khao", "Battle Of Team", "2024"],
-    tag: "Th�nh t�ch",
+    tag: "Thành tích",
     demo: "",
     github: "",
     thumbnail: "",
@@ -70,7 +70,7 @@ const FALLBACK_PROJECTS = [
     title: "Battle Of Team Strength Lightz II",
     description: "Tham gia thi d?u t?i gi?i Battle Of Team Strength Lightz II. Ti?p t?c ch�y tr�n s�n d?u.",
     tech: ["Team Battle", "Strength", "2024"],
-    tag: "Gi?i d?u",
+    tag: "Giải đấu",
     demo: "",
     github: "",
     thumbnail: "",
@@ -81,7 +81,7 @@ const FALLBACK_PROJECTS = [
     title: "Ultimate Battle Z 2024",
     description: "Tham gia Ultimate Battle Z 2024, c? x�t v?i c�c v?n d?ng vi�n m?nh nh?t khu v?c.",
     tech: ["Battle", "Street Workout", "2024"],
-    tag: "Gi?i d?u",
+    tag: "Giải đấu",
     demo: "",
     github: "",
     thumbnail: "",
@@ -117,9 +117,9 @@ function normalizeText(value) {
 
 function formatTagLabel(value) {
   const key = normalizeText(value);
-  if (key === "tat ca") return "T?t c?";
-  if (key === "giai dau") return "Gi?i d?u";
-  if (key === "thanh tich") return "Th�nh t�ch";
+  if (key === "tat ca") return "Tất cả";
+  if (key === "giai dau") return "Giải đấu";
+  if (key === "thanh tich") return "Thành tích";
   return value;
 }
 
@@ -473,7 +473,7 @@ function ProjectCard({ project, index }) {
 export default function PortfolioGrid() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTag, setActiveTag] = useState("T?t c?");
+  const [activeTag, setActiveTag] = useState("Tất cả");
   const headingRef = useScrollReveal();
   const filtersRef = useScrollReveal();
   const gridRef = useScrollReveal();
@@ -538,7 +538,7 @@ export default function PortfolioGrid() {
             <div>
               <div className="section-tag">Portfolio</div>
               <h2 className="portfolio-heading">
-                H�nh tr�nh<br />c?a <em>m�nh</em>
+                Hành trình<br />của <em>mình</em>
               </h2>
             </div>
           </div>

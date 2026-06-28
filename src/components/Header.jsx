@@ -4,6 +4,7 @@ import { useLang } from "../contexts/LanguageContext";
 const NAV_LINK_KEYS = [
   { key: "nav_about",   href: "#about" },
   { key: "nav_journey", href: "#journey" },
+  { key: "portfolio_tag", href: "#portfolio" },
   { key: "nav_contact", href: "#contact" },
 ];
 

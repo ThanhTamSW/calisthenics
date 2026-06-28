@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import "./HeroSection.css";
 import { useLang } from "../contexts/LanguageContext";
+import { getImageSrcSetConfig } from "../utils/imageOptimization";
 
 // ============================================================
 // HERO SECTION - Tam Calisthenics
@@ -13,72 +14,21 @@ const PROFILE_IMAGE_ALT_TEXT = {
   profile2: "Nguyen Thanh Tam luyen ky nang calisthenics voi dong tac can bang",
   profile3: "Chan dung Nguyen Thanh Tam trong buoi tap street workout",
 };
-// Lazy glob — Vite sẽ tạo dynamic import riêng cho từng ảnh
-// thay vì bundle tất cả vào main chunk như eager: true
-const PROFILE_IMAGE_MODULES = import.meta.glob(
-  "../../images/profile*.{png,jpg,jpeg,webp,avif,gif,svg}",
-  { eager: false, import: "default" }
-);
+// Load only profile image metadata, not images themselves
+const PROFILE_IMAGE_NAMES = ['profile1', 'profile2', 'profile3'];
 
-// Sắp xếp module keys để giữ thứ tự ổn định
-const PROFILE_MODULE_ENTRIES = Object.entries(PROFILE_IMAGE_MODULES).sort(
-  ([aPath], [bPath]) => {
-    const aName = aPath.split("/").pop() || "";
-    const bName = bPath.split("/").pop() || "";
-    return aName.localeCompare(bName, undefined, { numeric: true, sensitivity: "base" });
-  }
-);
-
-// Hàm tạo metadata ảnh từ path + url
-function makeImageMeta(path, url) {
-  const baseName = (path.split("/").pop() || "").replace(/\.[^.]+$/, "");
+const PROFILE_IMAGES = PROFILE_IMAGE_NAMES.map((baseName) => {
+  const srcSetConfig = getImageSrcSetConfig(baseName);
   return {
-    src: url,
+    baseName,
+    srcSet: srcSetConfig,
     alt: PROFILE_IMAGE_ALT_TEXT[baseName] || "Chan dung Nguyen Thanh Tam trong buoi tap calisthenics",
+    fallback: `./images/${baseName}-full.jpg`,
   };
-}
-
-// Custom hook load ảnh profile lazy theo thứ tự
-function useProfileImages() {
-  const [images, setImages] = useState([]);
-
-  useEffect(() => {
-    if (PROFILE_MODULE_ENTRIES.length === 0) return;
-
-    let cancelled = false;
-    const result = new Array(PROFILE_MODULE_ENTRIES.length).fill(null);
-
-    // Load tuần tự để ảnh đầu tiên hiện ra nhanh nhất
-    const loadAll = async () => {
-      for (let i = 0; i < PROFILE_MODULE_ENTRIES.length; i++) {
-        if (cancelled) break;
-        const [path, loader] = PROFILE_MODULE_ENTRIES[i];
-        try {
-          const url = await loader();
-          if (!cancelled) {
-            result[i] = makeImageMeta(path, url);
-            setImages((prev) => {
-              const next = [...prev];
-              next[i] = result[i];
-              return next.filter(Boolean);
-            });
-          }
-        } catch {
-          // Bỏ qua ảnh lỗi
-        }
-      }
-    };
-
-    loadAll();
-    return () => { cancelled = true; };
-  }, []);
-
-  return images;
-}
+});
 
 export default function HeroSection({ dark, onToggle }) {
   const { t } = useLang();
-  const PROFILE_IMAGES = useProfileImages(); // Lazy load ảnh profile
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [avatarPrevIndex, setAvatarPrevIndex] = useState(null);
   const hasAvatarCarousel = PROFILE_IMAGES.length > 1;
@@ -116,11 +66,9 @@ export default function HeroSection({ dark, onToggle }) {
   useEffect(() => {
     if (!hasAvatarCarousel) return;
 
-    // Preload only the next image (not all)
     const nextIndex = (avatarIndex + 1) % PROFILE_IMAGES.length;
     const nextImage = PROFILE_IMAGES[nextIndex];
 
-    // Create a hidden link tag to preload the next image variants
     const preloadAVIF = document.createElement('link');
     preloadAVIF.rel = 'preload';
     preloadAVIF.as = 'image';
@@ -259,10 +207,10 @@ export default function HeroSection({ dark, onToggle }) {
               {/* Social pill */}
               <div className="social-pill">
                 <div className="social-pill-icons">
-                  <a href="https://tiktok.com/@tamcalisthenics" target="_blank" rel="noreferrer">Tt</a>
-                  <a href="https://www.facebook.com/profile.php?id=61576483281888&locale=vi_VN" target="_blank" rel="noreferrer">Fb</a>
-                  <a href="https://zalo.me/0869797491" target="_blank" rel="noreferrer">Zl</a>
-                  <a href="mailto:ngthanhtam21.work@gmail.com">@</a>
+                  <a href="https://tiktok.com/@tamcalisthenics" target="_blank" rel="noreferrer" aria-label="Theo dõi TikTok của Tâm">Tt</a>
+                  <a href="https://www.facebook.com/profile.php?id=61576483281888&locale=vi_VN" target="_blank" rel="noreferrer" aria-label="Theo dõi Facebook của Tâm">Fb</a>
+                  <a href="https://zalo.me/0869797491" target="_blank" rel="noreferrer" aria-label="Nhắn tin Zalo">Zl</a>
+                  <a href="mailto:ngthanhtam21.work@gmail.com" aria-label="Gửi email cho Tâm">@</a>
                 </div>
                 <span className="social-pill-label">{t("hero_follow")}</span>
               </div>
@@ -340,3 +288,7 @@ export default function HeroSection({ dark, onToggle }) {
     </>
   );
 }
+
+
+
+
