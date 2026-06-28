@@ -79,9 +79,35 @@ if (!function_exists('app_send_json_headers')) {
     function app_send_json_headers(string $allowedMethods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'): void
     {
         header('Content-Type: application/json; charset=UTF-8');
-        header('Access-Control-Allow-Origin: *');
+        $origin = trim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
+        $allowOrigin = app_allowed_origin($origin);
+        if ($allowOrigin !== '') {
+            header('Access-Control-Allow-Origin: ' . $allowOrigin);
+            header('Vary: Origin');
+        }
         header('Access-Control-Allow-Methods: ' . $allowedMethods);
         header('Access-Control-Allow-Headers: Content-Type, Authorization');
+    }
+}
+
+if (!function_exists('app_allowed_origin')) {
+    function app_allowed_origin(string $origin): string
+    {
+        if ($origin === '') {
+            return '';
+        }
+
+        $raw = trim((string) app_env('APP_CORS_ORIGINS', ''));
+        if ($raw === '') {
+            return '';
+        }
+
+        $origins = array_filter(array_map('trim', explode(',', $raw)));
+        if (in_array('*', $origins, true)) {
+            return '*';
+        }
+
+        return in_array($origin, $origins, true) ? $origin : '';
     }
 }
 
@@ -89,6 +115,11 @@ if (!function_exists('app_handle_options_request')) {
     function app_handle_options_request(): void
     {
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+            $origin = trim((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
+            if ($origin !== '' && app_allowed_origin($origin) === '') {
+                http_response_code(403);
+                exit;
+            }
             http_response_code(200);
             exit;
         }
@@ -270,3 +301,163 @@ if (!function_exists('app_require_auth')) {
     }
 }
 
+if (!function_exists('app_client_ip')) {
+    function app_client_ip(): string
+    {
+        $candidates = [
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR',
+        ];
+
+        foreach ($candidates as $key) {
+            $value = trim((string) ($_SERVER[$key] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+
+            if ($key === 'HTTP_X_FORWARDED_FOR') {
+                $parts = array_map('trim', explode(',', $value));
+                foreach ($parts as $part) {
+                    if (filter_var($part, FILTER_VALIDATE_IP)) {
+                        return $part;
+                    }
+                }
+                continue;
+            }
+
+            if (filter_var($value, FILTER_VALIDATE_IP)) {
+                return $value;
+            }
+        }
+
+        return 'unknown';
+    }
+}
+
+if (!function_exists('app_rate_limit_allow')) {
+    function app_rate_limit_allow(string $storagePath, string $bucketKey, int $maxRequests, int $windowSeconds): bool
+    {
+        $dir = dirname($storagePath);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        $fp = @fopen($storagePath, 'c+');
+        if ($fp === false) {
+            // Fail-open so auth can still work if filesystem is not writable.
+            return true;
+        }
+
+        $allowed = true;
+
+        try {
+            if (!flock($fp, LOCK_EX)) {
+                return true;
+            }
+
+            rewind($fp);
+            $raw = stream_get_contents($fp);
+            $store = [];
+            if (is_string($raw) && trim($raw) !== '') {
+                $decoded = json_decode($raw, true);
+                if (is_array($decoded)) {
+                    $store = $decoded;
+                }
+            }
+
+            $now = time();
+            $cutoff = $now - $windowSeconds;
+
+            foreach ($store as $key => $attempts) {
+                if (!is_array($attempts)) {
+                    unset($store[$key]);
+                    continue;
+                }
+
+                $recent = [];
+                foreach ($attempts as $ts) {
+                    $tsInt = (int) $ts;
+                    if ($tsInt > $cutoff) {
+                        $recent[] = $tsInt;
+                    }
+                }
+
+                if (count($recent) === 0) {
+                    unset($store[$key]);
+                } else {
+                    $store[$key] = $recent;
+                }
+            }
+
+            $safeBucketKey = $bucketKey !== '' ? $bucketKey : 'default';
+            $bucket = $store[$safeBucketKey] ?? [];
+            if (!is_array($bucket)) {
+                $bucket = [];
+            }
+
+            if (count($bucket) >= $maxRequests) {
+                $allowed = false;
+            } else {
+                $bucket[] = $now;
+                $store[$safeBucketKey] = $bucket;
+            }
+
+            rewind($fp);
+            ftruncate($fp, 0);
+            fwrite($fp, json_encode($store));
+            fflush($fp);
+            flock($fp, LOCK_UN);
+        } finally {
+            fclose($fp);
+        }
+
+        return $allowed;
+    }
+}
+
+if (!function_exists('app_rate_limit_clear')) {
+    function app_rate_limit_clear(string $storagePath, string $bucketKey): void
+    {
+        if ($bucketKey === '' || !is_file($storagePath)) {
+            return;
+        }
+
+        $fp = @fopen($storagePath, 'c+');
+        if ($fp === false) {
+            return;
+        }
+
+        try {
+            if (!flock($fp, LOCK_EX)) {
+                return;
+            }
+
+            rewind($fp);
+            $raw = stream_get_contents($fp);
+            if (!is_string($raw) || trim($raw) === '') {
+                flock($fp, LOCK_UN);
+                return;
+            }
+
+            $store = json_decode($raw, true);
+            if (!is_array($store)) {
+                flock($fp, LOCK_UN);
+                return;
+            }
+
+            if (array_key_exists($bucketKey, $store)) {
+                unset($store[$bucketKey]);
+                rewind($fp);
+                ftruncate($fp, 0);
+                fwrite($fp, json_encode($store));
+                fflush($fp);
+            }
+
+            flock($fp, LOCK_UN);
+        } finally {
+            fclose($fp);
+        }
+    }
+}

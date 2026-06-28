@@ -75,6 +75,16 @@ VITE_RECAPTCHA_SITE_KEY=
 CONTACT_RECAPTCHA_SECRET=
 CONTACT_RECAPTCHA_MIN_SCORE=0.5
 CONTACT_RECAPTCHA_ACTION=contact_submit
+
+# Admin login rate limit
+ADMIN_LOGIN_RATE_LIMIT_ENABLED=true
+ADMIN_LOGIN_RATE_LIMIT_WINDOW=900
+ADMIN_LOGIN_RATE_LIMIT_MAX=8
+# ADMIN_LOGIN_RATE_LIMIT_STORAGE=/tmp/tam_admin_login_rate_limit.json
+
+# CORS whitelist (comma separated)
+# APP_CORS_ORIGINS=http://localhost:5173,https://thanhtamnguyen.id.vn
+APP_CORS_ORIGINS=
 ```
 Lưu ý: `.env` đã được `.gitignore`.
 
@@ -84,6 +94,14 @@ Lưu ý: `.env` đã được `.gitignore`.
 3) Restart app/dev server  
 
 Nếu để trống 2 biến trên, form vẫn chạy với lớp chống spam còn lại (honeypot + rate limit).
+
+### CORS cho API
+- CORS đã chuyển sang whitelist qua `APP_CORS_ORIGINS`.
+- Nếu để trống biến này, API chỉ phục vụ same-origin (không mở cross-origin từ trình duyệt).
+
+### Chống brute-force đăng nhập Admin
+- `/api/auth.php` có giới hạn đăng nhập sai theo `username + IP`.
+- Khi vượt giới hạn, API trả `429 Too Many Requests`.
 
 ---
 
