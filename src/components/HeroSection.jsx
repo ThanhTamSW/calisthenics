@@ -63,33 +63,7 @@ export default function HeroSection() {
     });
   }, [clearAvatarTransitionTimer]);
 
-  useEffect(() => {
-    if (!hasAvatarCarousel) return;
 
-    const nextIndex = (avatarIndex + 1) % PROFILE_IMAGES.length;
-    const nextImage = PROFILE_IMAGES[nextIndex];
-
-    const preloadAVIF = document.createElement('link');
-    preloadAVIF.rel = 'preload';
-    preloadAVIF.as = 'image';
-    preloadAVIF.type = 'image/avif';
-    preloadAVIF.imageSrcset = nextImage.srcSet.avif;
-    preloadAVIF.href = nextImage.fallback;
-    document.head.appendChild(preloadAVIF);
-
-    const preloadWebP = document.createElement('link');
-    preloadWebP.rel = 'preload';
-    preloadWebP.as = 'image';
-    preloadWebP.type = 'image/webp';
-    preloadWebP.imageSrcset = nextImage.srcSet.webp;
-    preloadWebP.href = nextImage.fallback;
-    document.head.appendChild(preloadWebP);
-
-    return () => {
-      document.head.removeChild(preloadAVIF);
-      document.head.removeChild(preloadWebP);
-    };
-  }, [avatarIndex, hasAvatarCarousel]);
 
   useEffect(() => {
     if (!hasAvatarCarousel) return undefined;
