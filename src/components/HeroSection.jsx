@@ -73,14 +73,16 @@ export default function HeroSection() {
     preloadAVIF.rel = 'preload';
     preloadAVIF.as = 'image';
     preloadAVIF.type = 'image/avif';
-    preloadAVIF.imagesrcset = nextImage.srcSet.avif;
+    preloadAVIF.imageSrcset = nextImage.srcSet.avif;
+    preloadAVIF.href = nextImage.fallback;
     document.head.appendChild(preloadAVIF);
 
     const preloadWebP = document.createElement('link');
     preloadWebP.rel = 'preload';
     preloadWebP.as = 'image';
     preloadWebP.type = 'image/webp';
-    preloadWebP.imagesrcset = nextImage.srcSet.webp;
+    preloadWebP.imageSrcset = nextImage.srcSet.webp;
+    preloadWebP.href = nextImage.fallback;
     document.head.appendChild(preloadWebP);
 
     return () => {
