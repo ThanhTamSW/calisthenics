@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import "./HeroSection.css";
 import { useLang } from "../contexts/LanguageContext";
-import { getImageSrcSetConfig } from "../utils/imageOptimization";
+
 
 // ============================================================
 // HERO SECTION - Tam Calisthenics
