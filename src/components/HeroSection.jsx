@@ -27,7 +27,7 @@ const PROFILE_IMAGES = PROFILE_IMAGE_NAMES.map((baseName) => {
   };
 });
 
-export default function HeroSection({ dark, onToggle }) {
+export default function HeroSection() {
   const { t } = useLang();
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [avatarPrevIndex, setAvatarPrevIndex] = useState(null);
