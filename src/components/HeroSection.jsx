@@ -8,7 +8,7 @@ import { getImageSrcSetConfig } from "../utils/imageOptimization";
 // Nhan dark/onToggle tu App de sync dark mode
 // ============================================================
 const HERO_CAROUSEL_AUTOPLAY_MS = 6200;
-const HERO_CAROUSEL_TRANSITION_MS = 600;
+const HERO_CAROUSEL_TRANSITION_MS = 1200;
 const PROFILE_IMAGE_ALT_TEXT = {
   profile1: "Nguyen Thanh Tam tap calisthenics o tu the dung tren thanh xa",
   profile2: "Nguyen Thanh Tam luyen ky nang calisthenics voi dong tac can bang",
