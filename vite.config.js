@@ -33,8 +33,21 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: "dist",
-      assetsDir: "assets",
+      outDir: 'dist',
+      assetsDir: 'assets',
+      sourcemap: false,
+      chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          },
+          // Tên file ổn định theo content hash
+          entryFileNames: "assets/[name]-[hash].js",
+          chunkFileNames: "assets/[name]-[hash].js",
+          assetFileNames: "assets/[name]-[hash][extname]",
+        },
+      },
     },
   };
 });

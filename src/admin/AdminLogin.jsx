@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { isAdminAuthenticated, setAdminSession } from "./auth";
+import { isAdminAuthenticated, setAdminSession, startAutoRefresh } from "./auth";
 import "./admin.css";
 
 export default function AdminLogin() {
@@ -39,6 +39,7 @@ export default function AdminLogin() {
         expiresAt: payload.expiresAt,
       });
 
+      startAutoRefresh(); // Tự động gia hạn Access Token trước khi hết hạn
       navigate("/admin/dashboard", { replace: true });
     } catch (submitError) {
       setError(submitError?.message || "Không thể đăng nhập");

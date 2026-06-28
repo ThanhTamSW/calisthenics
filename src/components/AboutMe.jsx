@@ -1,6 +1,7 @@
-﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./AboutMe.css";
 import useScrollReveal from "../hooks/useScrollReveal";
+import { useLang } from "../contexts/LanguageContext";
 
 // ============================================================
 // ABOUT ME - Tam Calisthenics Personal Brand
@@ -9,7 +10,8 @@ import useScrollReveal from "../hooks/useScrollReveal";
 const TIMELINE_AUTOPLAY_MS = 4200;
 const TIMELINE_CAROUSEL_TRANSITION_MS = 900;
 
-const TIMELINE = [
+// Fallback data khi API chưa sẵn sàng
+const TIMELINE_FALLBACK = [
   {
     year: "30/03/2025",
     title: "Battle Of Team II",
@@ -31,7 +33,7 @@ const TIMELINE = [
   {
     year: "27/04/2024",
     title: "PREMIUM BATTLE II",
-    desc: "Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam. Giải đấu quy tụ nhiều tài năng nổi bật với những màn trình diễn đầy ấn tượng, sức mạnh và kỹ thuật. Mục tiêu của giải là tìm ra đại diện Việt Nam tham dự Xia-Long Cup Asia Street Workout Championship tại Đài Loan và có thể là giải SWUB.",
+    desc: "Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam.",
     accent: false,
     cardTag: "Giải đấu",
     chips: ["Premium", "Battle", "2024"],
@@ -49,7 +51,7 @@ const TIMELINE = [
   {
     year: "09/12/2023",
     title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
-    desc: "Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam. Giải đấu hướng tới thúc đẩy phong trào Calisthenics - Street Workout, kết nối cộng đồng và lan tỏa tinh thần vượt giới hạn tại Việt Nam.",
+    desc: "Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam.",
     accent: false,
     cardTag: "Giải đấu",
     chips: ["Championship", "Street Workout", "2023"],
@@ -58,7 +60,7 @@ const TIMELINE = [
   {
     year: "20/08/2023",
     title: "PREMIUM BATTLE I",
-    desc: "Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam. Giải đấu nổi bật với bảng thi đấu hấp dẫn cùng hệ thống huy chương dành cho những vận động viên xuất sắc nhất.",
+    desc: "Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam.",
     accent: false,
     cardTag: "Thành tích",
     chips: ["Top 1", "Champion", "Battle"],
@@ -67,7 +69,7 @@ const TIMELINE = [
   {
     year: "15/07/2023",
     title: "SOUTHERN STREET WORKOUT BATTLE 2023",
-    desc: "Sau thời gian dài ấp ủ, SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh. Southern Street Workout ra đời với sứ mệnh tổ chức các giải đấu và sự kiện Street Workout tại khu vực miền Nam Việt Nam. Với sự đồng hành từ Ashura, Sept Strength Club, shop Hoàng Kỳ Tống và VNSWC, giải đấu trở thành tiền đề để lan tỏa đam mê Street Workout, tinh thần tập luyện và rèn luyện sức khỏe tới cộng đồng.",
+    desc: "SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh với sứ mệnh tổ chức các giải đấu Street Workout tại miền Nam Việt Nam.",
     accent: false,
     cardTag: "Giải đấu",
     chips: ["Street Workout", "Battle", "2023"],
@@ -76,7 +78,7 @@ const TIMELINE = [
   {
     year: "2020",
     title: "Bắt đầu hành trình Calisthenics",
-    desc: "Lần đầu tiếp xúc với calisthenics và street workout. Bắt đầu tập các động tác cơ bản và xây dựng nền tảng từ đầu.",
+    desc: "Cột mốc đầu tiên bén duyên với Calisthenics & Street Workout. Hành trình bắt đầu từ con số 0 với những bài tập cơ bản nhất. Từng giọt mồ hôi ngày đó đã xây dựng nên một nền móng vững chắc cho hiện tại.",
     accent: false,
     cardTag: "Hành trình",
     chips: ["Calisthenics", "Nền tảng", "Khởi đầu"],
@@ -85,12 +87,12 @@ const TIMELINE = [
 ];
 
 const INTERESTS = [
-  { emoji: "\u{1F4AA}", label: "Calisthenics" },
-  { emoji: "\u{1F938}", label: "Street Workout" },
-  { emoji: "\u{1F3AF}", label: "Skills Training" },
-  { emoji: "\u{1F3C3}", label: "Cardio" },
-  { emoji: "\u{1F957}", label: "Dinh dưỡng" },
-  { emoji: "\u{1F3AC}", label: "Chia sẻ hành trình" },
+  { emoji: "\u{1F4AA}", labelKey: "about_interest_1" },
+  { emoji: "\u{1F938}", labelKey: "about_interest_2" },
+  { emoji: "\u{1F3AF}", labelKey: "about_interest_3" },
+  { emoji: "\u{1F3C3}", labelKey: "about_interest_4" },
+  { emoji: "\u{1F957}", labelKey: "about_interest_5" },
+  { emoji: "\u{1F3AC}", labelKey: "about_interest_6" },
 ];
 
 const TIMELINE_IMAGE_MODULES = import.meta.glob("../../images/{BOT_II,giamkhao,giamkhao_1,giamkhao_2,giamkhao_3,giamkhao_4,premium1_1,premium1_2,premium1_3,premium1_4,premium1_5,premium2_1,premium2_2,premium2_3,southern_1,ultimateZ_1,ultimateZ_2,championship_1}.{png,jpg,jpeg,webp,avif,gif,svg}", {
@@ -132,7 +134,7 @@ function resolveTimelineImages(imageKeys = [], imageLookup = {}) {
     .filter(Boolean);
 }
 
-function TimelineMediaCarousel({ images, title }) {
+function TimelineMediaCarousel({ images, title, imageAltText }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState(null);
   const imageSignature = images.map((image) => `${image.src}::${image.position || ""}`).join("|");
@@ -206,7 +208,7 @@ function TimelineMediaCarousel({ images, title }) {
               key={`${title}-dot-${index}`}
               type="button"
               className={`timeline-project-dot${index === activeIndex ? " active" : ""}`}
-              aria-label={`Ảnh ${index + 1}`}
+              aria-label={`${imageAltText || 'Ảnh'} ${index + 1}`}
               onClick={() => switchToIndex(index)}
             />
           ))}
@@ -217,6 +219,8 @@ function TimelineMediaCarousel({ images, title }) {
 }
 
 export default function AboutMe() {
+  const { t } = useLang();
+  const [timeline, setTimeline] = useState(TIMELINE_FALLBACK);
   const [openTimelineId, setOpenTimelineId] = useState("");
   const [activeTimelineId, setActiveTimelineId] = useState("");
   const [timelineImageLookup, setTimelineImageLookup] = useState({});
@@ -225,6 +229,46 @@ export default function AboutMe() {
   const cardsRef = useScrollReveal();
   const tabsRef = useScrollReveal();
   const timelineItemRefs = useRef({});
+
+  // Fetch timeline từ API, fallback về dữ liệu tĩnh nếu thất bại
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+    fetch("/api/timeline.php", {
+      signal: controller.signal,
+      headers: { Accept: "application/json" },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (Array.isArray(data) && data.length > 0) {
+          // Map API response sang định dạng component (imageKeys giữ từ fallback nếu title khớp)
+          const mapped = data.map((item) => {
+            const fallback = TIMELINE_FALLBACK.find(
+              (f) => f.title.toLowerCase() === item.title.toLowerCase()
+            );
+            return {
+              year: item.year,
+              title: item.title,
+              desc: item.desc,
+              accent: !!item.accent,
+              cardTag: item.cardTag,
+              chips: Array.isArray(item.chips) ? item.chips : [],
+              imageKeys: fallback?.imageKeys ?? [],
+            };
+          });
+          setTimeline(mapped);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Giữ dữ liệu fallback
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const getItems = () =>
@@ -299,12 +343,12 @@ export default function AboutMe() {
   }, [timelineImageLookup]);
 
   useEffect(() => {
-    const activeTimeline = TIMELINE.find((item) => getTimelineId(item) === activeTimelineId);
-    if (!activeTimeline) return;
-    loadTimelineImages(activeTimeline.imageKeys);
-  }, [activeTimelineId, loadTimelineImages]);
+    if (!activeTimelineId) return;
+    const activeTimeline = timeline.find((item) => getTimelineId(item) === activeTimelineId);
+    if (activeTimeline) loadTimelineImages(activeTimeline.imageKeys);
+  }, [activeTimelineId, timeline, loadTimelineImages]);
   const toggleTimeline = (id) => {
-    const timelineItem = TIMELINE.find((item) => getTimelineId(item) === id);
+    const timelineItem = timeline.find((item) => getTimelineId(item) === id);
     if (timelineItem) {
       loadTimelineImages(timelineItem.imageKeys);
     }
@@ -319,28 +363,22 @@ export default function AboutMe() {
           {/* HEADER */}
           <div className="about-header">
             <div ref={headerLeftRef} className="scroll-reveal-left">
-              <div className="section-tag">Về mình</div>
+              <div className="section-tag">{t("about_tag")}</div>
               <h2 className="about-heading">
-                Kiên trì mỗi ngày,<br />
-                tiến bộ <em>mỗi ngày</em>
+                {t("about_heading_1")}<br />
+                {t("about_heading_2")} <em>{t("about_heading_em")}</em>
               </h2>
             </div>
             <div ref={headerRightRef} className="scroll-reveal-right">
               <div className="about-bio">
-                <p>
-                  Mình là <strong>Nguyễn Thanh Tâm</strong>, gắn bó với calisthenics từ năm <strong>2020</strong>.
-                </p>
-                <p>
-                  Quá trình tập luyện của mình đi từ các bài nền tảng như pull-up, dips, core đến các kỹ năng nâng cao như muscle up, front lever và planche.
-                </p>
-                <p>
-                  Mình chia sẻ hành trình trên TikTok & Facebook dưới thương hiệu <strong>Tâm Calisthenics</strong>. Mình tin rằng <strong>kỷ luật và nhất quán</strong> là điều tạo ra khác biệt thật sự.
-                </p>
+                <p dangerouslySetInnerHTML={{ __html: t("about_bio_1") }} />
+                <p dangerouslySetInnerHTML={{ __html: t("about_bio_2") }} />
+                <p dangerouslySetInnerHTML={{ __html: t("about_bio_3") }} />
               </div>
               <div className="interests">
                 {INTERESTS.map((i) => (
-                  <div key={i.label} className="interest-chip">
-                    <span>{i.emoji}</span> {i.label}
+                  <div key={i.labelKey} className="interest-chip">
+                    <span>{i.emoji}</span> {t(i.labelKey)}
                   </div>
                 ))}
               </div>
@@ -351,47 +389,47 @@ export default function AboutMe() {
           <div ref={cardsRef} className="about-cards scroll-reveal">
             <div className="about-card">
               <span className="card-icon">{"\u{1F947}"}</span>
-              <div className="card-num">Top 1</div>
-              <div className="card-label">Premium Battle I</div>
+              <div className="card-num">{t("about_card_1_num")}</div>
+              <div className="card-label">{t("about_card_1_label")}</div>
             </div>
             <div className="about-card">
               <span className="card-icon">{"\u{1F4AA}"}</span>
-              <div className="card-num">5+</div>
-              <div className="card-label">Năm tập luyện</div>
+              <div className="card-num">{t("about_card_2_num")}</div>
+              <div className="card-label">{t("about_card_2_label")}</div>
             </div>
             <div className="about-card">
               <span className="card-icon">{"\u{1F3C6}"}</span>
-              <div className="card-num">7+</div>
-              <div className="card-label">Giải đấu tham gia</div>
+              <div className="card-num">{t("about_card_3_num")}</div>
+              <div className="card-label">{t("about_card_3_label")}</div>
             </div>
           </div>
 
           {/* TABS */}
           <div ref={tabsRef} className="tabs-wrap scroll-reveal" id="journey">
             <div className="tab-list">
-              <button className="tab-btn active">Hành trình</button>
+              <button className="tab-btn active">{t("about_tab_journey")}</button>
             </div>
 
             <div className="timeline">
-              {TIMELINE.map((t, index) => {
-                const timelineId = getTimelineId(t);
+              {timeline.map((t_item, index) => {
+                const timelineId = getTimelineId(t_item);
                 const isOpen = openTimelineId === timelineId;
                 const isInView = activeTimelineId === timelineId;
-                const images = resolveTimelineImages(t.imageKeys, timelineImageLookup);
-                const hasConfiguredImages = t.imageKeys.length > 0;
+                const images = resolveTimelineImages(t_item.imageKeys, timelineImageLookup);
+                const hasConfiguredImages = (t_item.imageKeys ?? []).length > 0;
                 return (
                   <div
-                    key={`${t.year}-${t.title}-${index}`}
+                    key={`${t_item.year}-${t_item.title}-${index}`}
                     ref={(element) => {
                       if (element) timelineItemRefs.current[timelineId] = element;
                       else delete timelineItemRefs.current[timelineId];
                     }}
-                    className={`timeline-item${t.accent ? " accent" : ""}${isOpen ? " open" : ""}${isInView ? " in-view" : ""}`}
+                    className={`timeline-item${t_item.accent ? " accent" : ""}${isOpen ? " open" : ""}${isInView ? " in-view" : ""}`}
                   >
                     <button type="button" className="timeline-head" onClick={() => toggleTimeline(timelineId)} aria-expanded={isOpen}>
                       <div className="timeline-head-main">
-                        <div className="timeline-year">{t.year}</div>
-                        <div className="timeline-title">{t.title}</div>
+                        <div className="timeline-year">{t_item.year}</div>
+                        <div className="timeline-title">{t_item.title}</div>
                       </div>
                       <span className="timeline-chevron">{">"}</span>
                     </button>
@@ -401,17 +439,17 @@ export default function AboutMe() {
                         <div className="timeline-project-card">
                           {hasConfiguredImages ? (
                             <div className="timeline-project-thumb">
-                              <TimelineMediaCarousel images={images} title={t.title} />
-                              <span className="timeline-project-tag">{t.cardTag}</span>
+                              <TimelineMediaCarousel images={images} title={t_item.title} imageAltText={t("about_image_alt")} />
+                              <span className="timeline-project-tag">{t_item.cardTag}</span>
                             </div>
                           ) : null}
                           <div className="timeline-project-body">
-                            <div className="timeline-project-title">{t.title}</div>
-                            <div className="timeline-project-desc">{t.desc}</div>
+                            <div className="timeline-project-title">{t_item.title}</div>
+                            <div className="timeline-project-desc">{t_item.desc}</div>
                             <div className="timeline-project-chips">
-                              {!hasConfiguredImages ? <span className="timeline-project-chip">{t.cardTag}</span> : null}
-                              {t.chips.map((chip) => (
-                                <span key={`${t.title}-${chip}`} className="timeline-project-chip">{chip}</span>
+                              {!hasConfiguredImages ? <span className="timeline-project-chip">{t_item.cardTag}</span> : null}
+                              {t_item.chips.map((chip) => (
+                                <span key={`${t_item.title}-${chip}`} className="timeline-project-chip">{chip}</span>
                               ))}
                             </div>
                           </div>

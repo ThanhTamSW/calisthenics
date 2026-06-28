@@ -1,0 +1,25 @@
+# ============================================================
+# Bảo mật thư mục uploads: Chặn mọi script thực thi
+# File này phải được deploy cùng với thư mục /public/uploads/
+# ============================================================
+
+# Cấm PHP và các ngôn ngữ server-side thực thi trong thư mục này
+<FilesMatch "\.(php|php3|php4|php5|php7|php8|phtml|phar|py|pl|sh|cgi|asp|aspx|rb|jsp)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Chỉ cho phép truy cập các định dạng ảnh được chỉ định
+<FilesMatch "\.(jpg|jpeg|png|webp|gif|avif|svg)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Tắt directory listing
+Options -Indexes
+
+# Không cho phép .htaccess bị đọc qua HTTP
+<Files ".htaccess">
+    Order Deny,Allow
+    Deny from all
+</Files>

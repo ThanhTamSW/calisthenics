@@ -1,12 +1,16 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useLang } from "../contexts/LanguageContext";
 
-const NAV_LINKS = [
-  { label: "Về mình", href: "#about" },
-  { label: "Hành trình", href: "#journey" },
-  { label: "Liên hệ", href: "#contact" },
+const NAV_LINK_KEYS = [
+  { key: "nav_about",   href: "#about" },
+  { key: "nav_journey", href: "#journey" },
+  { key: "nav_contact", href: "#contact" },
 ];
 
 export default function Header({ dark, onToggle }) {
+  const { t, toggleLang, lang } = useLang();
+  const navLinks = NAV_LINK_KEYS.map((item) => ({ label: t(item.key), href: item.href }));
+
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
@@ -18,8 +22,8 @@ export default function Header({ dark, onToggle }) {
   }, []);
 
   useEffect(() => {
-    const sectionIds = NAV_LINKS.map((link) => link.href.replace("#", ""));
     const HEADER_OFFSET = 92;
+    const sectionIds = ["about", "journey", "contact"];
 
     const getSections = () =>
       sectionIds
@@ -346,9 +350,9 @@ export default function Header({ dark, onToggle }) {
         </a>
 
         <nav className="header-nav">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <a
-              key={`${link.label}-${link.href}`}
+              key={`${link.key ?? link.label}-${link.href}`}
               href={link.href}
               className={`nav-link${activeSection === link.href.replace("#", "") ? " active" : ""}`}
             >
@@ -359,12 +363,21 @@ export default function Header({ dark, onToggle }) {
 
         <div className="header-actions">
           <button
+            type="button"
+            className="lang-toggle-btn"
+            onClick={toggleLang}
+            aria-label={`Switch to ${lang === "vi" ? "English" : "Tiếng Việt"}`}
+            title={lang === "vi" ? "Switch to English" : "Chuyển sang Tiếng Việt"}
+          >
+            {lang === "vi" ? "EN" : "VI"}
+          </button>
+          <button
             className={`toggle-btn${dark ? " dark" : ""}`}
             onClick={onToggle}
             aria-label="Toggle dark mode"
           />
           <a href="#contact" className="header-cta" onClick={handleNavClick}>
-            Liên hệ
+            {t("cta_contact")}
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -391,9 +404,9 @@ export default function Header({ dark, onToggle }) {
 
       <div id="mobile-menu" className={`mobile-menu${menuOpen ? " open" : ""}`}>
         <div className="mobile-nav-links">
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <a
-              key={`${link.label}-${link.href}`}
+              key={`${link.key ?? link.label}-${link.href}`}
               href={link.href}
               className={`mobile-nav-link${activeSection === link.href.replace("#", "") ? " active" : ""}`}
               onClick={handleNavClick}
@@ -407,11 +420,21 @@ export default function Header({ dark, onToggle }) {
         </div>
         <div className="mobile-menu-footer">
           <span className="mobile-toggle-label">{dark ? "Dark mode" : "Light mode"}</span>
-          <button
-            className={`toggle-btn${dark ? " dark" : ""}`}
-            onClick={onToggle}
-            aria-label="Toggle dark mode"
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              type="button"
+              className="lang-toggle-btn"
+              onClick={toggleLang}
+              aria-label={`Switch language`}
+            >
+              {lang === "vi" ? "EN" : "VI"}
+            </button>
+            <button
+              className={`toggle-btn${dark ? " dark" : ""}`}
+              onClick={onToggle}
+              aria-label="Toggle dark mode"
+            />
+          </div>
         </div>
       </div>
     </>

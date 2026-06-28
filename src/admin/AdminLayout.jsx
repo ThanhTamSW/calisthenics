@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { clearAdminSession, getAdminUser } from "./auth";
+import { adminLogout, getAdminUser, stopAutoRefresh } from "./auth";
 import "./admin.css";
 
 const NAV_ITEMS = [
   { to: "/admin/dashboard", label: "Dashboard" },
   { to: "/admin/portfolio", label: "Portfolio" },
+  { to: "/admin/timeline", label: "Timeline" },
   { to: "/admin/contacts", label: "Contacts" },
 ];
 
@@ -14,8 +15,9 @@ export default function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const user = useMemo(() => getAdminUser(), []);
 
-  const handleLogout = () => {
-    clearAdminSession();
+  const handleLogout = async () => {
+    stopAutoRefresh();
+    await adminLogout(); // Xoá Refresh Token Cookie trên server + session local
     navigate("/admin/login", { replace: true });
   };
 

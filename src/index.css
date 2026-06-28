@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    GLOBAL CSS — Tâm Calisthenics
    Single source of truth for variables, fonts & reset
    ============================================================ */
@@ -157,4 +157,30 @@ body::before {
   .scroll-reveal-right.revealed {
     transform: translateY(0);
   }
+}
+
+/* —— LANGUAGE TOGGLE BUTTON —— */
+.lang-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 38px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  color: var(--fg2);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.lang-toggle-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }

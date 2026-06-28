@@ -1,5 +1,6 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import "./HeroSection.css";
+import { useLang } from "../contexts/LanguageContext";
 
 // ============================================================
 // HERO SECTION - Tam Calisthenics
@@ -12,26 +13,72 @@ const PROFILE_IMAGE_ALT_TEXT = {
   profile2: "Nguyen Thanh Tam luyen ky nang calisthenics voi dong tac can bang",
   profile3: "Chan dung Nguyen Thanh Tam trong buoi tap street workout",
 };
-const PROFILE_IMAGE_MODULES = import.meta.glob("../../images/profile*.{png,jpg,jpeg,webp,avif,gif,svg}", {
-  eager: true,
-  import: "default",
-});
+// Lazy glob — Vite sẽ tạo dynamic import riêng cho từng ảnh
+// thay vì bundle tất cả vào main chunk như eager: true
+const PROFILE_IMAGE_MODULES = import.meta.glob(
+  "../../images/profile*.{png,jpg,jpeg,webp,avif,gif,svg}",
+  { eager: false, import: "default" }
+);
 
-const PROFILE_IMAGES = Object.entries(PROFILE_IMAGE_MODULES)
-  .sort(([aPath], [bPath]) => {
+// Sắp xếp module keys để giữ thứ tự ổn định
+const PROFILE_MODULE_ENTRIES = Object.entries(PROFILE_IMAGE_MODULES).sort(
+  ([aPath], [bPath]) => {
     const aName = aPath.split("/").pop() || "";
     const bName = bPath.split("/").pop() || "";
     return aName.localeCompare(bName, undefined, { numeric: true, sensitivity: "base" });
-  })
-  .map(([path, url]) => {
-    const fileName = path.split("/").pop() || "";
-    const baseName = fileName.replace(/\.[^.]+$/, "");
-    return {
-      src: url,
-      alt: PROFILE_IMAGE_ALT_TEXT[baseName] || "Chan dung Nguyen Thanh Tam trong buoi tap calisthenics",
+  }
+);
+
+// Hàm tạo metadata ảnh từ path + url
+function makeImageMeta(path, url) {
+  const baseName = (path.split("/").pop() || "").replace(/\.[^.]+$/, "");
+  return {
+    src: url,
+    alt: PROFILE_IMAGE_ALT_TEXT[baseName] || "Chan dung Nguyen Thanh Tam trong buoi tap calisthenics",
+  };
+}
+
+// Custom hook load ảnh profile lazy theo thứ tự
+function useProfileImages() {
+  const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    if (PROFILE_MODULE_ENTRIES.length === 0) return;
+
+    let cancelled = false;
+    const result = new Array(PROFILE_MODULE_ENTRIES.length).fill(null);
+
+    // Load tuần tự để ảnh đầu tiên hiện ra nhanh nhất
+    const loadAll = async () => {
+      for (let i = 0; i < PROFILE_MODULE_ENTRIES.length; i++) {
+        if (cancelled) break;
+        const [path, loader] = PROFILE_MODULE_ENTRIES[i];
+        try {
+          const url = await loader();
+          if (!cancelled) {
+            result[i] = makeImageMeta(path, url);
+            setImages((prev) => {
+              const next = [...prev];
+              next[i] = result[i];
+              return next.filter(Boolean);
+            });
+          }
+        } catch {
+          // Bỏ qua ảnh lỗi
+        }
+      }
     };
-  });
+
+    loadAll();
+    return () => { cancelled = true; };
+  }, []);
+
+  return images;
+}
+
 export default function HeroSection({ dark, onToggle }) {
+  const { t } = useLang();
+  const PROFILE_IMAGES = useProfileImages(); // Lazy load ảnh profile
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [avatarPrevIndex, setAvatarPrevIndex] = useState(null);
   const hasAvatarCarousel = PROFILE_IMAGES.length > 1;
@@ -143,47 +190,46 @@ export default function HeroSection({ dark, onToggle }) {
           {/* LEFT */}
           <div className="hero-left">
 
-            <div className="hero-tag">CALISTHENICS - HÀNH TRÌNH - KỶ LUẬT</div>
+            <div className="hero-tag">{t("hero_tag")}</div>
 
             <h1 className="hero-h1">
-              Strength.<br />
-              Balance.<br />
+              {t("hero_h1_1")}<br />
+              {t("hero_h1_2")}<br />
               <span className="line-accent">
-                Discipline
+                {t("hero_h1_3")}
                 <svg viewBox="0 0 200 12" preserveAspectRatio="none">
                   <path d="M2,8 Q50,2 100,8 Q150,14 198,6" />
                 </svg>
               </span>
             </h1>
             <p className="hero-desc">
-              Mình là Thanh Tâm, theo calisthenics từ nền tảng cơ bản đến thi đấu thực chiến.
-              Chia sẻ hành trình tập luyện thật, tiến bộ thật, không filter.
+              {t("hero_desc")}
             </p>
 
             <div className="hero-ctas">
               <a href="#about" className="btn-primary">
-                Xem hành trình
+                {t("hero_cta_journey")}
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </a>
               <a href="#contact" className="btn-secondary">
-                Kết nối với mình
+                {t("hero_cta_connect")}
               </a>
             </div>
 
             <div className="stats-row">
               <div>
-                <div className="stat-num">Top 1</div>
-                <div className="stat-label">Premium Battle I</div>
+                <div className="stat-num">{t("hero_stat_1_num")}</div>
+                <div className="stat-label">{t("hero_stat_1_label")}</div>
               </div>
               <div>
-                <div className="stat-num">5+ <span>năm</span></div>
-                <div className="stat-label">Tập luyện</div>
+                <div className="stat-num">{t("hero_stat_2_num")} <span>{t("hero_stat_2_unit")}</span></div>
+                <div className="stat-label">{t("hero_stat_2_label")}</div>
               </div>
               <div>
-                <div className="stat-num">7+ <span>giải</span></div>
-                <div className="stat-label">Đã tham gia</div>
+                <div className="stat-num">{t("hero_stat_3_num")} <span>{t("hero_stat_3_unit")}</span></div>
+                <div className="stat-label">{t("hero_stat_3_label")}</div>
               </div>
             </div>
           </div>
@@ -199,9 +245,10 @@ export default function HeroSection({ dark, onToggle }) {
                 <div className="social-pill-icons">
                   <a href="https://tiktok.com/@tamcalisthenics" target="_blank" rel="noreferrer">Tt</a>
                   <a href="https://www.facebook.com/profile.php?id=61576483281888&locale=vi_VN" target="_blank" rel="noreferrer">Fb</a>
+                  <a href="https://zalo.me/0869797491" target="_blank" rel="noreferrer">Zl</a>
                   <a href="mailto:ngthanhtam21.work@gmail.com">@</a>
                 </div>
-                <span className="social-pill-label">Theo dõi mình</span>
+                <span className="social-pill-label">{t("hero_follow")}</span>
               </div>
 
               {/* Avatar image carousel */}
@@ -235,7 +282,7 @@ export default function HeroSection({ dark, onToggle }) {
                       <circle cx="12" cy="8" r="4" />
                       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
                     </svg>
-                    <span>Thêm ảnh của bạn vào đây</span>
+                    <span>{t("hero_add_image")}</span>
                   </div>
                 )}
 
@@ -264,7 +311,7 @@ export default function HeroSection({ dark, onToggle }) {
 
               {/* Badge */}
               <div className="avatar-badge">
-                Never Give Up
+                {t("hero_badge")}
               </div>
             </div>
           </div>

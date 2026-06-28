@@ -9,40 +9,15 @@ if (!function_exists('app_load_env')) {
         }
 
         $root = $rootPath ?? dirname(__DIR__, 2);
-        $envPath = $root . DIRECTORY_SEPARATOR . '.env';
-
-        if (!is_file($envPath)) {
-            $loaded = true;
-            return;
+        
+        $autoloadPath = $root . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+        if (is_file($autoloadPath)) {
+            require_once $autoloadPath;
         }
-
-        $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if ($lines === false) {
-            $loaded = true;
-            return;
-        }
-
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if ($line === '' || strpos($line, '#') === 0 || strpos($line, '=') === false) {
-                continue;
-            }
-
-            [$name, $value] = array_map('trim', explode('=', $line, 2));
-            if ($name === '' || getenv($name) !== false) {
-                continue;
-            }
-
-            if (
-                (strpos($value, '"') === 0 && substr($value, -1) === '"') ||
-                (strpos($value, "'") === 0 && substr($value, -1) === "'")
-            ) {
-                $value = substr($value, 1, -1);
-            }
-
-            $_ENV[$name] = $value;
-            $_SERVER[$name] = $value;
-            putenv($name . '=' . $value);
+        
+        if (class_exists('Dotenv\Dotenv')) {
+            $dotenv = Dotenv\Dotenv::createImmutable($root);
+            $dotenv->safeLoad();
         }
 
         $loaded = true;

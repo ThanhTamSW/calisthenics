@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { adminApi } from "./auth";
 
 export default function DashboardPage() {
@@ -57,22 +58,34 @@ export default function DashboardPage() {
       {error ? <div className="admin-alert error">{error}</div> : null}
 
       <div className="admin-stats-grid">
-        <article className="admin-stat-card">
-          <h3>Portfolio Items</h3>
-          <strong>{loading ? "..." : stats.portfolioTotal}</strong>
-        </article>
-        <article className="admin-stat-card">
-          <h3>Featured</h3>
-          <strong>{loading ? "..." : stats.featuredTotal}</strong>
-        </article>
-        <article className="admin-stat-card">
-          <h3>Contacts</h3>
-          <strong>{loading ? "..." : stats.contactsTotal}</strong>
-        </article>
-        <article className="admin-stat-card">
-          <h3>Unread Messages</h3>
-          <strong>{loading ? "..." : stats.unreadTotal}</strong>
-        </article>
+        <Link to="/admin/portfolio" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-icon">🏆</div>
+          <div>
+            <h3>Portfolio Items</h3>
+            <strong>{loading ? "..." : stats.portfolioTotal}</strong>
+          </div>
+        </Link>
+        <Link to="/admin/portfolio" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-icon">🔥</div>
+          <div>
+            <h3>Featured</h3>
+            <strong>{loading ? "..." : stats.featuredTotal}</strong>
+          </div>
+        </Link>
+        <Link to="/admin/contacts" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-icon">📨</div>
+          <div>
+            <h3>Contacts</h3>
+            <strong>{loading ? "..." : stats.contactsTotal}</strong>
+          </div>
+        </Link>
+        <Link to="/admin/contacts" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div className="stat-icon">🔴</div>
+          <div>
+            <h3>Unread Messages</h3>
+            <strong>{loading ? "..." : stats.unreadTotal}</strong>
+          </div>
+        </Link>
       </div>
     </section>
   );

@@ -8,99 +8,13 @@ require_once __DIR__ . '/db.php';
 ini_set('display_errors', '0');
 ini_set('html_errors', '0');
 
-header('Content-Type: application/json; charset=UTF-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-function jsonResponse(int $statusCode, array $payload): void
-{
-    http_response_code($statusCode);
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-function loadEnvFile(string $path): void
-{
-    if (!is_file($path)) {
-        return;
-    }
-
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    if ($lines === false) {
-        return;
-    }
-
-    foreach ($lines as $line) {
-        $line = trim($line);
-
-        if ($line === '' || strpos($line, '#') === 0 || strpos($line, '=') === false) {
-            continue;
-        }
-
-        [$name, $value] = array_map('trim', explode('=', $line, 2));
-        if ($name === '') {
-            continue;
-        }
-
-        if (
-            (strpos($value, '"') === 0 && substr($value, -1) === '"') ||
-            (strpos($value, "'") === 0 && substr($value, -1) === "'")
-        ) {
-            $value = substr($value, 1, -1);
-        }
-
-        if (getenv($name) !== false) {
-            continue;
-        }
-
-        $_ENV[$name] = $value;
-        $_SERVER[$name] = $value;
-        putenv($name . '=' . $value);
-    }
-}
-
-function envValue(string $key, ?string $default = null): ?string
-{
-    $value = getenv($key);
-    if ($value !== false) {
-        return $value;
-    }
-
-    if (array_key_exists($key, $_ENV)) {
-        return (string) $_ENV[$key];
-    }
-
-    if (array_key_exists($key, $_SERVER)) {
-        return (string) $_SERVER[$key];
-    }
-
-    return $default;
-}
-
-function envFlag(string $key, bool $default = false): bool
-{
-    $value = envValue($key);
-    if ($value === null || $value === '') {
-        return $default;
-    }
-
-    return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
-}
-
-function envInt(string $key, int $default): int
-{
-    $value = envValue($key);
-    if ($value === null || $value === '' || !is_numeric($value)) {
-        return $default;
-    }
-
-    return (int) $value;
-}
+app_send_json_headers('POST, OPTIONS');
+app_handle_options_request();
+app_require_method(['POST']);
 
 function envFloat(string $key, float $default): float
 {
-    $value = envValue($key);
+    $value = app_env($key);
     if ($value === null || $value === '' || !is_numeric($value)) {
         return $default;
     }
@@ -379,23 +293,14 @@ function verifyRecaptcha(
     return [true, 'ok'];
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    jsonResponse(405, ['success' => false, 'message' => 'Method not allowed']);
-}
-
 $rawBody = file_get_contents('php://input');
 if ($rawBody === false || $rawBody === '') {
-    jsonResponse(400, ['success' => false, 'message' => 'Request body is empty']);
+    app_json_response(400, ['success' => false, 'message' => 'Request body is empty']);
 }
 
 $data = json_decode($rawBody, true);
 if (!is_array($data)) {
-    jsonResponse(400, ['success' => false, 'message' => 'Invalid JSON']);
+    app_json_response(400, ['success' => false, 'message' => 'Invalid JSON']);
 }
 
 $name = sanitizeShortText((string) ($data['name'] ?? ''));
@@ -419,14 +324,14 @@ if (messageLength($message) < 10) {
     $errors[] = 'Tin nhan qua ngan';
 }
 if (!empty($errors)) {
-    jsonResponse(422, ['success' => false, 'errors' => $errors]);
+    app_json_response(422, ['success' => false, 'errors' => $errors]);
 }
 
 $rootPath = dirname(__DIR__, 2);
 $autoloadPath = $rootPath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 if (!is_file($autoloadPath)) {
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'Thieu thu vien mail tren server. Hay cai Composer dependencies truoc.',
     ]);
@@ -434,35 +339,35 @@ if (!is_file($autoloadPath)) {
 
 require_once $autoloadPath;
 
-loadEnvFile($rootPath . DIRECTORY_SEPARATOR . '.env');
+app_load_env();
 
 $config = [
-    'host' => trim((string) envValue('SMTP_HOST', '')),
-    'port' => envInt('SMTP_PORT', 587),
-    'secure' => strtolower(trim((string) envValue('SMTP_SECURE', 'tls'))),
-    'username' => trim((string) envValue('SMTP_USERNAME', '')),
-    'password' => (string) envValue('SMTP_PASSWORD', ''),
-    'fromEmail' => trim((string) envValue('SMTP_FROM_EMAIL', '')),
-    'fromName' => trim((string) envValue('SMTP_FROM_NAME', 'Tam Calisthenics')),
-    'toEmail' => trim((string) envValue('CONTACT_TO_EMAIL', 'ngthanhtam21.work@gmail.com')),
-    'timeout' => envInt('SMTP_TIMEOUT', 15),
-    'sendConfirmation' => envFlag('CONTACT_CONFIRMATION_ENABLED', true),
+    'host' => trim((string) app_env('SMTP_HOST', '')),
+    'port' => app_env_int('SMTP_PORT', 587),
+    'secure' => strtolower(trim((string) app_env('SMTP_SECURE', 'tls'))),
+    'username' => trim((string) app_env('SMTP_USERNAME', '')),
+    'password' => (string) app_env('SMTP_PASSWORD', ''),
+    'fromEmail' => trim((string) app_env('SMTP_FROM_EMAIL', '')),
+    'fromName' => trim((string) app_env('SMTP_FROM_NAME', 'Tam Calisthenics')),
+    'toEmail' => trim((string) app_env('CONTACT_TO_EMAIL', 'ngthanhtam21.work@gmail.com')),
+    'timeout' => app_env_int('SMTP_TIMEOUT', 15),
+    'sendConfirmation' => app_env_bool('CONTACT_CONFIRMATION_ENABLED', true),
 ];
 
 $antiSpam = [
-    'minFillMs' => max(0, envInt('CONTACT_MIN_FILL_MS', 2500)),
-    'rateLimitEnabled' => envFlag('CONTACT_RATE_LIMIT_ENABLED', true),
-    'rateLimitWindow' => max(10, envInt('CONTACT_RATE_LIMIT_WINDOW', 600)),
-    'rateLimitMax' => max(1, envInt('CONTACT_RATE_LIMIT_MAX', 5)),
-    'rateLimitStorage' => trim((string) envValue('CONTACT_RATE_LIMIT_STORAGE', sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tam_contact_rate_limit.json')),
-    'recaptchaSecret' => trim((string) envValue('CONTACT_RECAPTCHA_SECRET', '')),
+    'minFillMs' => max(0, app_env_int('CONTACT_MIN_FILL_MS', 2500)),
+    'rateLimitEnabled' => app_env_bool('CONTACT_RATE_LIMIT_ENABLED', true),
+    'rateLimitWindow' => max(10, app_env_int('CONTACT_RATE_LIMIT_WINDOW', 600)),
+    'rateLimitMax' => max(1, app_env_int('CONTACT_RATE_LIMIT_MAX', 5)),
+    'rateLimitStorage' => trim((string) app_env('CONTACT_RATE_LIMIT_STORAGE', sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tam_contact_rate_limit.json')),
+    'recaptchaSecret' => trim((string) app_env('CONTACT_RECAPTCHA_SECRET', '')),
     'recaptchaMinScore' => envFloat('CONTACT_RECAPTCHA_MIN_SCORE', 0.5),
-    'recaptchaAction' => trim((string) envValue('CONTACT_RECAPTCHA_ACTION', 'contact_submit')),
+    'recaptchaAction' => trim((string) app_env('CONTACT_RECAPTCHA_ACTION', 'contact_submit')),
 ];
 
 $missingKeys = missingConfigKeys($config);
 if (!empty($missingKeys)) {
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'SMTP chua duoc cau hinh day du trong file .env.',
         'missing' => $missingKeys,
@@ -470,32 +375,32 @@ if (!empty($missingKeys)) {
 }
 
 if (!filter_var($config['fromEmail'], FILTER_VALIDATE_EMAIL) || !filter_var($config['toEmail'], FILTER_VALIDATE_EMAIL)) {
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'SMTP_FROM_EMAIL hoac CONTACT_TO_EMAIL khong hop le.',
     ]);
 }
 
 if ($config['port'] <= 0) {
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'SMTP_PORT phai la so nguyen duong.',
     ]);
 }
 
 if (!in_array($config['secure'], ['', 'tls', 'ssl'], true)) {
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'SMTP_SECURE chi nhan tls, ssl hoac de trong.',
     ]);
 }
 
 if ($honeypot !== '') {
-    jsonResponse(422, ['success' => false, 'message' => 'Du lieu gui khong hop le.']);
+    app_json_response(422, ['success' => false, 'message' => 'Du lieu gui khong hop le.']);
 }
 
 if ($antiSpam['minFillMs'] > 0 && $formElapsedMs > 0 && $formElapsedMs < $antiSpam['minFillMs']) {
-    jsonResponse(429, ['success' => false, 'message' => 'Ban thao tac qua nhanh. Vui long thu lai.']);
+    app_json_response(429, ['success' => false, 'message' => 'Ban thao tac qua nhanh. Vui long thu lai.']);
 }
 
 $clientIp = getClientIp();
@@ -508,13 +413,13 @@ if ($antiSpam['rateLimitEnabled']) {
     );
 
     if (!$allowed) {
-        jsonResponse(429, ['success' => false, 'message' => 'Ban gui qua nhieu lan. Vui long thu lai sau it phut.']);
+        app_json_response(429, ['success' => false, 'message' => 'Ban gui qua nhieu lan. Vui long thu lai sau it phut.']);
     }
 }
 
 if ($antiSpam['recaptchaSecret'] !== '') {
     if ($recaptchaToken === '') {
-        jsonResponse(422, ['success' => false, 'message' => 'Thieu token xac minh anti-spam.']);
+        app_json_response(422, ['success' => false, 'message' => 'Thieu token xac minh anti-spam.']);
     }
 
     [$okCaptcha, $captchaReason] = verifyRecaptcha(
@@ -527,7 +432,7 @@ if ($antiSpam['recaptchaSecret'] !== '') {
 
     if (!$okCaptcha) {
         error_log('[contact.php] reCAPTCHA failed - ' . $captchaReason);
-        jsonResponse(422, ['success' => false, 'message' => 'Xac minh anti-spam that bai.']);
+        app_json_response(422, ['success' => false, 'message' => 'Xac minh anti-spam that bai.']);
     }
 }
 
@@ -550,7 +455,7 @@ try {
     $contactId = (int) $pdo->lastInsertId();
 } catch (Throwable $exception) {
     error_log('[contact.php] Save contact to DB failed - ' . $exception->getMessage());
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'Khong the luu tin nhan vao he thong luc nay.',
     ]);
@@ -577,13 +482,13 @@ try {
     $mailer->send();
 } catch (MailException $exception) {
     error_log('[contact.php] Primary SMTP send failed - ' . $exception->getMessage());
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'Khong the gui email luc nay. Vui long kiem tra lai cau hinh SMTP.',
     ]);
 } catch (Throwable $exception) {
     error_log('[contact.php] Primary SMTP unexpected error - ' . $exception->getMessage());
-    jsonResponse(500, [
+    app_json_response(500, [
         'success' => false,
         'message' => 'He thong gui mail dang gap loi khong mong muon.',
     ]);
@@ -609,4 +514,4 @@ if ($config['sendConfirmation']) {
     }
 }
 
-jsonResponse(200, ['success' => true, 'message' => 'Gui thanh cong', 'contactId' => $contactId]);
+app_json_response(200, ['success' => true, 'message' => 'Gui thanh cong', 'contactId' => $contactId]);

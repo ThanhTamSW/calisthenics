@@ -1,4 +1,5 @@
-﻿import useScrollReveal from "../hooks/useScrollReveal";
+import useScrollReveal from "../hooks/useScrollReveal";
+import { useLang } from "../contexts/LanguageContext";
 
 // ============================================================
 // FOOTER — Tâm Calisthenics
@@ -35,16 +36,26 @@ const SOCIAL = [
       </svg>
     ),
   },
+  {
+    label: "Zalo",
+    href: "https://zalo.me/0869797491",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20.25 10.75c0-4.28-4.14-7.75-9.25-7.75S1.75 6.47 1.75 10.75c0 3.42 2.64 6.34 6.36 7.37-.3.94-1.12 3-1.18 3.19-.07.21.05.24.18.15.11-.07 3.63-2.4 5.16-3.46.25.02.5.03.76.03 5.11 0 9.22-3.47 9.22-7.28z"/>
+      </svg>
+    ),
+  },
 ];
 
 const LINKS = [
-  { label: "Về mình", href: "#about" },
-  { label: "Hành trình", href: "#journey" },
-  { label: "Liên hệ", href: "#contact" },
+  { labelKey: "nav_about", href: "#about" },
+  { labelKey: "nav_journey", href: "#journey" },
+  { labelKey: "nav_contact", href: "#contact" },
 ];
 
 export default function Footer() {
   const footerRef = useScrollReveal();
+  const { t } = useLang();
   return (
     <>
       <style>{`
@@ -211,25 +222,25 @@ export default function Footer() {
                 Tâm<span>.</span>
               </a>
               <p className="footer-tagline">
-                Calisthenics athlete.<br />
-                Chia sẻ hành trình thật — không filter.
+                {t("footer_tagline_1")}<br />
+                {t("footer_tagline_2")}
               </p>
             </div>
 
             <div className="footer-links-group">
               {/* Nav links */}
               <div className="footer-col">
-                <div className="footer-col-title">Trang</div>
+                <div className="footer-col-title">{t("footer_nav_title")}</div>
                 <div className="footer-col-links">
                   {LINKS.map((l) => (
-                    <a key={`${l.label}-${l.href}`} href={l.href} className="footer-col-link">{l.label}</a>
+                    <a key={`${l.labelKey}-${l.href}`} href={l.href} className="footer-col-link">{t(l.labelKey)}</a>
                   ))}
                 </div>
               </div>
 
               {/* Social */}
               <div className="footer-col">
-                <div className="footer-col-title">Theo dõi</div>
+                <div className="footer-col-title">{t("footer_social_title")}</div>
                 <div className="footer-social">
                   {SOCIAL.map((s) => (
                     <a key={s.label} href={s.href} className="footer-social-link" target="_blank" rel="noreferrer">
@@ -245,10 +256,10 @@ export default function Footer() {
           {/* Bottom */}
           <div className="footer-bottom">
             <p className="footer-copy">
-              © {YEAR} <span>Tâm Calisthenics</span>. Làm với 💪 và ☕
+              © {YEAR} <span>{t("footer_copy_1")}</span>. {t("footer_copy_2")} 💪 {t("footer_copy_3")} ☕
             </p>
             <a href="#" className="back-to-top">
-              Lên đầu trang
+              {t("footer_back_to_top")}
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M6 10V2M2 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
