@@ -18,12 +18,14 @@ const PROFILE_IMAGE_ALT_TEXT = {
 const PROFILE_IMAGE_NAMES = ['profile1', 'profile2', 'profile3'];
 
 const PROFILE_IMAGES = PROFILE_IMAGE_NAMES.map((baseName) => {
-  const srcSetConfig = getImageSrcSetConfig(baseName);
   return {
     baseName,
-    srcSet: srcSetConfig,
+    srcSet: {
+      avif: `/images/optimized/${baseName}-480w.avif 480w, /images/optimized/${baseName}-full.avif 800w`,
+      webp: `/images/optimized/${baseName}-480w.webp 480w, /images/optimized/${baseName}-full.webp 800w`
+    },
     alt: PROFILE_IMAGE_ALT_TEXT[baseName] || "Chan dung Nguyen Thanh Tam trong buoi tap calisthenics",
-    fallback: `/images/${baseName}-full.jpg`,
+    fallback: `/images/${baseName}.jpg`,
   };
 });
 
@@ -202,7 +204,7 @@ export default function HeroSection() {
                         <img
                           src={PROFILE_IMAGES[avatarPrevIndex].fallback}
                           alt=""
-                          loading="lazy"
+                          loading="eager"
                           decoding="async"
                         />
                       </picture>
@@ -213,7 +215,7 @@ export default function HeroSection() {
                       <img
                         src={PROFILE_IMAGES[avatarIndex].fallback}
                         alt={PROFILE_IMAGES[avatarIndex].alt}
-                        loading={avatarIndex === 0 ? "eager" : "lazy"}
+                        loading="eager"
                         decoding="async"
                         fetchpriority={avatarIndex === 0 ? "high" : "auto"}
                       />

@@ -21,7 +21,7 @@ export function generateResponsiveImage(baseName, sizes = [480, 768, 1024, 1280]
   return {
     avif: generateSrcSet(baseName, sizes, 'avif'),
     webp: generateSrcSet(baseName, sizes, 'webp'),
-    jpg: `/images/${baseName}-full.jpg`,
+    jpg: `/images/${baseName}.jpg`,
   };
 }
 
