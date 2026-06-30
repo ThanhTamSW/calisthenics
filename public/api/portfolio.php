@@ -17,7 +17,7 @@ function portfolio_clean_text($value): string
 {
     $value = trim((string) $value);
     $value = strip_tags($value);
-    return trim((string) preg_replace('/\s+/', ' ', $value));
+    return trim((string) preg_replace('/\s+/u', ' ', $value));
 }
 
 function portfolio_clean_multiline($value): string

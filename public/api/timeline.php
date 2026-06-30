@@ -15,7 +15,7 @@ try {
 
 function timeline_clean_text($value): string
 {
-    return trim(preg_replace('/\s+/', ' ', strip_tags(trim((string) $value))) ?? '');
+    return trim(preg_replace('/\s+/u', ' ', strip_tags(trim((string) $value))) ?? '');
 }
 
 function timeline_clean_multiline($value): string

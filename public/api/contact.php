@@ -30,7 +30,7 @@ function sanitizeHeaderValue(string $value): string
 function sanitizeShortText(string $value): string
 {
     $value = strip_tags($value);
-    $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+    $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
     return trim($value);
 }
 

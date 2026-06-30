@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import useScrollReveal from "../hooks/useScrollReveal";
+import { useLang } from "../contexts/LanguageContext";
 import "./PortfolioGrid.css";
 
 // ============================================================
@@ -13,7 +14,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 1,
     title: "Top 1 Premium Battle",
-    description: "Ng�y 20/08/2023, The Premium Battle ch�nh th?c di?n ra v?i b?u kh�ng kh� k?ch t�nh v� d?y dam m� c?a c?ng d?ng calisthenics Vi?t Nam. Gi?i d?u n?i b?t v?i b?ng thi d?u h?p d?n c�ng h? th?ng huy chuong d�nh cho nh?ng v?n d?ng vi�n xu?t s?c nh?t.",
+    description: "Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam. Giải đấu nổi bật với bảng thi đấu hấp dẫn cùng hệ thống huy chương dành cho những vận động viên xuất sắc nhất.",
     tech: ["Top 1", "Champion", "Battle"],
     tag: "Thành tích",
     demo: "",
@@ -24,7 +25,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 2,
     title: "SOUTHERN STREET WORKOUT BATTLE 2023",
-    description: "Sau th?i gian d�i ?p ?, SOUTHERN STREET WORKOUT BATTLE 2023 ch�nh th?c kh?i tranh. Southern Street Workout ra d?i v?i s? m?nh t? ch?c c�c gi?i d?u v� s? ki?n Street Workout t?i khu v?c mi?n Nam Vi?t Nam. V?i s? d?ng h�nh t? Ashura, Sept Strength Club, shop Ho�ng K? T?ng v� VNSWC, gi?i d?u tr? th�nh ti?n d? d? lan t?a dam m� Street Workout, tinh th?n t?p luy?n v� r�n luy?n s?c kh?e t?i c?ng d?ng.",
+    description: "Sau thời gian dài ấp ủ, SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh. Southern Street Workout ra đời với sứ mệnh tổ chức các giải đấu và sự kiện Street Workout tại khu vực miền Nam Việt Nam. Với sự đồng hành từ Ashura, Sept Strength Club, shop Hoàng Kế Tường và VNSWC, giải đấu trở thành tiền đề để lan tỏa đam mê Street Workout, tinh thần tập luyện và rèn luyện sức khỏe tới cộng đồng.",
     tech: ["Street Workout", "Battle", "2023"],
     tag: "Giải đấu",
     demo: "",
@@ -35,7 +36,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 3,
     title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
-    description: "Vietnam Street Workout Championship 2023 quy t? v?n d?ng vi�n t? ba mi?n B?c, Trung, Nam. Gi?i d?u hu?ng t?i th�c d?y phong tr�o Calisthenics - Street Workout, k?t n?i c?ng d?ng v� lan t?a tinh th?n vu?t gi?i h?n t?i Vi?t Nam.",
+    description: "Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam. Giải đấu hướng tới thúc đẩy phong trào Calisthenics - Street Workout, kết nối cộng đồng và lan tỏa tinh thần vượt giới hạn tại Việt Nam.",
     tech: ["Quoc gia", "Championship", "2023"],
     tag: "Giải đấu",
     demo: "",
@@ -46,7 +47,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 4,
     title: "PREMIUM BATTLE II",
-    description: "Premium Battle II l� s? ki?n du?c t? ch?c chuy�n nghi?p d�nh cho c?ng d?ng dam m� Calisthenics tr�n kh?p Vi?t Nam. Gi?i d?u quy t? nhi?u t�i nang n?i b?t v?i nh?ng m�n tr�nh di?n d?y ?n tu?ng, s?c m?nh v� k? thu?t. M?c ti�u c?a gi?i l� t�m ra d?i di?n Vi?t Nam tham d? Xia-Long Cup Asia Street Workout Championship t?i ��i Loan v� c� th? l� gi?i SWUB.",
+    description: "Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam. Giải đấu quy tụ nhiều tài năng nổi bật với những màn trình diễn đầy ấn tượng, sức mạnh và kỹ thuật. Mục tiêu của giải là tìm ra đại diện Việt Nam tham dự Xia-Long Cup Asia Street Workout Championship tại Đài Loan và có thể là giải SWUB.",
     tech: ["Battle", "Premium", "Comeback"],
     tag: "Giải đấu",
     demo: "",
@@ -56,8 +57,8 @@ const FALLBACK_PROJECTS = [
   },
   {
     id: 5,
-    title: "Gi�m kh?o - Battle Of Team I",
-    description: "�u?c m?i l�m gi�m kh?o t?i gi?i Battle Of Team I. T? v?n d?ng vi�n tr? th�nh ngu?i d�nh gi�.",
+    title: "Giám khảo - Battle Of Team I",
+    description: "Được mời làm giám khảo tại giải Battle Of Team I. Từ vận động viên trở thành người đánh giá.",
     tech: ["Giam khao", "Battle Of Team", "2024"],
     tag: "Thành tích",
     demo: "",
@@ -68,7 +69,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 6,
     title: "Battle Of Team Strength Lightz II",
-    description: "Tham gia thi d?u t?i gi?i Battle Of Team Strength Lightz II. Ti?p t?c ch�y tr�n s�n d?u.",
+    description: "Tham gia thi đấu tại giải Battle Of Team Strength Lightz II. Tiếp tục cháy trên sàn đấu.",
     tech: ["Team Battle", "Strength", "2024"],
     tag: "Giải đấu",
     demo: "",
@@ -79,7 +80,7 @@ const FALLBACK_PROJECTS = [
   {
     id: 7,
     title: "Ultimate Battle Z 2024",
-    description: "Tham gia Ultimate Battle Z 2024, c? x�t v?i c�c v?n d?ng vi�n m?nh nh?t khu v?c.",
+    description: "Tham gia Ultimate Battle Z 2024, cọ xát với các vận động viên mạnh nhất khu vực.",
     tech: ["Battle", "Street Workout", "2024"],
     tag: "Giải đấu",
     demo: "",
@@ -471,6 +472,7 @@ function ProjectCard({ project, index }) {
 }
 
 export default function PortfolioGrid() {
+  const { t } = useLang();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTag, setActiveTag] = useState("Tất cả");
@@ -536,9 +538,9 @@ export default function PortfolioGrid() {
 
           <div ref={headingRef} className="portfolio-top scroll-reveal-left">
             <div>
-              <div className="section-tag">Portfolio</div>
+              <div className="section-tag">{t("portfolio_tag")}</div>
               <h2 className="portfolio-heading">
-                Hành trình<br />của <em>mình</em>
+                {t("portfolio_heading_1")}<br /><em>{t("portfolio_heading_em")}</em>
               </h2>
             </div>
           </div>
