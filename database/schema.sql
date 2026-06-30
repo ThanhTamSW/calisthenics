@@ -179,12 +179,12 @@ CREATE TABLE IF NOT EXISTS timeline_items (
 -- Seed dữ liệu mẫu từ dữ liệu tĩnh hiện có trong AboutMe.jsx
 INSERT INTO timeline_items (year, title, description, card_tag, chips_json, accent, display_order) VALUES
   ('30/03/2025', 'Battle Of Team II', 'Tham gia thi đấu tại Battle Of Team II, tiếp tục hành trình cọ xát và nâng cấp bản thân.', 'Giải đấu', '["Battle Of Team","Street Workout","2025"]', 1, 80),
-  ('31/12/2024', 'Giám khảo - Battle Of Team I', 'Được mời làm giám khảo tại giải Battle Of Team I, đánh dấu cột mốc mới trong hành trình thi đấu.', 'Thành tích', '["Giám khảo","Battle Of Team","2024"]', 0, 70),
-  ('27/04/2024', 'PREMIUM BATTLE II', 'Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam.', 'Giải đấu', '["Premium","Battle","2024"]', 0, 60),
-  ('21/01/2024', 'Ultimate Battle Z 2024', 'Tham gia Ultimate Battle Z 2024, cọ xát cùng các vận động viên street workout mạnh trong khu vực.', 'Giải đấu', '["Battle","Street Workout","2024"]', 0, 50),
-  ('09/12/2023', 'VIETNAM STREET WORKOUT CHAMPIONSHIP 2023', 'Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam.', 'Giải đấu', '["Championship","Street Workout","2023"]', 0, 40),
-  ('20/08/2023', 'PREMIUM BATTLE I', 'Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam.', 'Thành tích', '["Top 1","Champion","Battle"]', 0, 30),
-  ('15/07/2023', 'SOUTHERN STREET WORKOUT BATTLE 2023', 'SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh với sứ mệnh tổ chức các giải đấu Street Workout tại miền Nam Việt Nam.', 'Giải đấu', '["Street Workout","Battle","2023"]', 0, 20),
+  ('31/12/2024', 'Giám khảo - Battle Of Team I', 'Được mời làm giám khảo tại giải Battle Of Team I. Từ vận động viên trở thành người đánh giá.', 'Thành tích', '["Giám khảo","Battle Of Team","2024"]', 0, 70),
+  ('27/04/2024', 'PREMIUM BATTLE II', 'Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam. Giải đấu quy tụ nhiều tài năng nổi bật với những màn trình diễn đầy ấn tượng, sức mạnh và kỹ thuật.', 'Giải đấu', '["Premium","Battle","2024"]', 0, 60),
+  ('21/01/2024', 'Ultimate Battle Z 2024', 'Tham gia Ultimate Battle Z 2024, cọ xát với các vận động viên mạnh nhất khu vực.', 'Giải đấu', '["Battle","Street Workout","2024"]', 0, 50),
+  ('09/12/2023', 'VIETNAM STREET WORKOUT CHAMPIONSHIP 2023', 'Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam. Giải đấu hướng tới thúc đẩy phong trào Calisthenics - Street Workout, kết nối cộng đồng và lan tỏa tinh thần vượt giới hạn tại Việt Nam.', 'Giải đấu', '["Championship","Street Workout","2023"]', 0, 40),
+  ('20/08/2023', 'PREMIUM BATTLE I', 'Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam. Giải đấu nổi bật với bảng thi đấu hấp dẫn cùng hệ thống huy chương dành cho những vận động viên xuất sắc nhất.', 'Thành tích', '["Top 1","Champion","Battle"]', 0, 30),
+  ('15/07/2023', 'SOUTHERN STREET WORKOUT BATTLE 2023', 'Sau thời gian dài ấp ủ, SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh. Southern Street Workout ra đời với sứ mệnh tổ chức các giải đấu và sự kiện Street Workout tại khu vực miền Nam Việt Nam.', 'Giải đấu', '["Street Workout","Battle","2023"]', 0, 20),
   ('2020', 'Bắt đầu hành trình Calisthenics', 'Lần đầu tiếp xúc với calisthenics và street workout. Bắt đầu tập các động tác cơ bản và xây dựng nền tảng từ đầu.', 'Hành trình', '["Calisthenics","Nền tảng","Khởi đầu"]', 0, 10)
 ON DUPLICATE KEY UPDATE title = VALUES(title);
 

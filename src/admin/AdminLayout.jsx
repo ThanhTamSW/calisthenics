@@ -5,7 +5,6 @@ import "./admin.css";
 
 const NAV_ITEMS = [
   { to: "/admin/dashboard", label: "Dashboard" },
-  { to: "/admin/portfolio", label: "Portfolio" },
   { to: "/admin/timeline", label: "Timeline" },
   { to: "/admin/contacts", label: "Contacts" },
 ];

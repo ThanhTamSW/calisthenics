@@ -6,8 +6,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [stats, setStats] = useState({
-    portfolioTotal: 0,
-    featuredTotal: 0,
     contactsTotal: 0,
     unreadTotal: 0,
   });
@@ -19,18 +17,17 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [portfolioData, contactsSummary] = await Promise.all([
-          fetch("/api/portfolio.php").then((r) => r.json()),
+        const [timelineData, contactsSummary] = await Promise.all([
+          fetch("/api/timeline.php").then((r) => r.json()),
           adminApi("/api/contacts.php?summary=1"),
         ]);
 
-        const portfolioList = Array.isArray(portfolioData) ? portfolioData : [];
+        const timelineList = Array.isArray(timelineData) ? timelineData : [];
         const contacts = contactsSummary?.data || {};
 
         if (!active) return;
         setStats({
-          portfolioTotal: portfolioList.length,
-          featuredTotal: portfolioList.filter((item) => item?.featured).length,
+          timelineTotal: timelineList.length,
           contactsTotal: Number(contacts.total || 0),
           unreadTotal: Number(contacts.unread || 0),
         });
@@ -58,18 +55,11 @@ export default function DashboardPage() {
       {error ? <div className="admin-alert error">{error}</div> : null}
 
       <div className="admin-stats-grid">
-        <Link to="/admin/portfolio" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link to="/admin/timeline" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="stat-icon">🏆</div>
           <div>
-            <h3>Portfolio Items</h3>
-            <strong>{loading ? "..." : stats.portfolioTotal}</strong>
-          </div>
-        </Link>
-        <Link to="/admin/portfolio" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="stat-icon">🔥</div>
-          <div>
-            <h3>Featured</h3>
-            <strong>{loading ? "..." : stats.featuredTotal}</strong>
+            <h3>Timeline Items</h3>
+            <strong>{loading ? "..." : stats.timelineTotal}</strong>
           </div>
         </Link>
         <Link to="/admin/contacts" className="admin-stat-card" style={{ textDecoration: 'none', color: 'inherit' }}>
