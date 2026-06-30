@@ -11,80 +11,156 @@ const TIMELINE_AUTOPLAY_MS = 4200;
 const TIMELINE_CAROUSEL_TRANSITION_MS = 900;
 
 // Fallback data khi API chưa sẵn sàng
-const TIMELINE_FALLBACK = [
-  {
-    year: "30/03/2025",
-    title: "Battle Of Team II",
-    desc: "Tham gia thi đấu tại Battle Of Team II, tiếp tục hành trình cọ xát và nâng cấp bản thân.",
-    accent: true,
-    cardTag: "Giải đấu",
-    chips: ["Battle Of Team", "Street Workout", "2025"],
-    imageKeys: ["BOT_II"],
-  },
-  {
-    year: "31/12/2024",
-    title: "Giám khảo - Battle Of Team I",
-    desc: "Được mời làm giám khảo tại giải Battle Of Team I. Từ vận động viên trở thành người đánh giá.",
-    accent: false,
-    cardTag: "Thành tích",
-    chips: ["Giám khảo", "Battle Of Team", "2024"],
-    imageKeys: ["giamkhao_1", "giamkhao_2", "giamkhao_3", "giamkhao_4", "giamkhao"],
-  },
-  {
-    year: "27/04/2024",
-    title: "PREMIUM BATTLE II",
-    desc: "Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam. Giải đấu quy tụ nhiều tài năng nổi bật với những màn trình diễn đầy ấn tượng, sức mạnh và kỹ thuật.",
-    accent: false,
-    cardTag: "Giải đấu",
-    chips: ["Premium", "Battle", "2024"],
-    imageKeys: ["premium2_1", "premium2_2", "premium2_3"],
-  },
-  {
-    year: "21/01/2024",
-    title: "Ultimate Battle Z 2024",
-    desc: "Tham gia Ultimate Battle Z 2024, cọ xát với các vận động viên mạnh nhất khu vực.",
-    accent: false,
-    cardTag: "Giải đấu",
-    chips: ["Battle", "Street Workout", "2024"],
-    imageKeys: ["ultimateZ_1", "ultimateZ_2"],
-  },
-  {
-    year: "09/12/2023",
-    title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
-    desc: "Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam. Giải đấu hướng tới thúc đẩy phong trào Calisthenics - Street Workout, kết nối cộng đồng và lan tỏa tinh thần vượt giới hạn tại Việt Nam.",
-    accent: false,
-    cardTag: "Giải đấu",
-    chips: ["Championship", "Street Workout", "2023"],
-    imageKeys: ["championship_1"],
-  },
-  {
-    year: "20/08/2023",
-    title: "PREMIUM BATTLE I",
-    desc: "Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam. Giải đấu nổi bật với bảng thi đấu hấp dẫn cùng hệ thống huy chương dành cho những vận động viên xuất sắc nhất.",
-    accent: false,
-    cardTag: "Thành tích",
-    chips: ["Top 1", "Champion", "Battle"],
-    imageKeys: ["premium1_1", "premium1_2", "premium1_3", "premium1_4", "premium1_5"],
-  },
-  {
-    year: "15/07/2023",
-    title: "SOUTHERN STREET WORKOUT BATTLE 2023",
-    desc: "Sau thời gian dài ấp ủ, SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh. Southern Street Workout ra đời với sứ mệnh tổ chức các giải đấu và sự kiện Street Workout tại khu vực miền Nam Việt Nam.",
-    accent: false,
-    cardTag: "Giải đấu",
-    chips: ["Street Workout", "Battle", "2023"],
-    imageKeys: ["southern_1"],
-  },
-  {
-    year: "2020",
-    title: "Bắt đầu hành trình Calisthenics",
-    desc: "Cột mốc đầu tiên bén duyên với Calisthenics & Street Workout. Hành trình bắt đầu từ con số 0 với những bài tập cơ bản nhất. Từng giọt mồ hôi ngày đó đã xây dựng nên một nền móng vững chắc cho hiện tại.",
-    accent: false,
-    cardTag: "Hành trình",
-    chips: ["Calisthenics", "Nền tảng", "Khởi đầu"],
-    imageKeys: [],
-  },
-];
+const TIMELINE_DATA = {
+  vi: [
+    {
+      year: "30/03/2025",
+      title: "Battle Of Team II",
+      desc: "Tham gia thi đấu tại Battle Of Team II, tiếp tục hành trình cọ xát và nâng cấp bản thân.",
+      accent: true,
+      cardTag: "Giải đấu",
+      chips: ["Battle Of Team", "Street Workout", "2025"],
+      imageKeys: ["BOT_II"],
+    },
+    {
+      year: "31/12/2024",
+      title: "Giám khảo - Battle Of Team I",
+      desc: "Được mời làm giám khảo tại giải Battle Of Team I. Từ vận động viên trở thành người đánh giá.",
+      accent: false,
+      cardTag: "Thành tích",
+      chips: ["Giám khảo", "Battle Of Team", "2024"],
+      imageKeys: ["giamkhao_1", "giamkhao_2", "giamkhao_3", "giamkhao_4", "giamkhao"],
+    },
+    {
+      year: "27/04/2024",
+      title: "PREMIUM BATTLE II",
+      desc: "Premium Battle II là sự kiện được tổ chức chuyên nghiệp dành cho cộng đồng đam mê Calisthenics trên khắp Việt Nam. Giải đấu quy tụ nhiều tài năng nổi bật với những màn trình diễn đầy ấn tượng, sức mạnh và kỹ thuật.",
+      accent: false,
+      cardTag: "Giải đấu",
+      chips: ["Premium", "Battle", "2024"],
+      imageKeys: ["premium2_1", "premium2_2", "premium2_3"],
+    },
+    {
+      year: "21/01/2024",
+      title: "Ultimate Battle Z 2024",
+      desc: "Tham gia Ultimate Battle Z 2024, cọ xát với các vận động viên mạnh nhất khu vực.",
+      accent: false,
+      cardTag: "Giải đấu",
+      chips: ["Battle", "Street Workout", "2024"],
+      imageKeys: ["ultimateZ_1", "ultimateZ_2"],
+    },
+    {
+      year: "09/12/2023",
+      title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
+      desc: "Vietnam Street Workout Championship 2023 quy tụ vận động viên từ ba miền Bắc, Trung, Nam. Giải đấu hướng tới thúc đẩy phong trào Calisthenics - Street Workout, kết nối cộng đồng và lan tỏa tinh thần vượt giới hạn tại Việt Nam.",
+      accent: false,
+      cardTag: "Giải đấu",
+      chips: ["Championship", "Street Workout", "2023"],
+      imageKeys: ["championship_1"],
+    },
+    {
+      year: "20/08/2023",
+      title: "PREMIUM BATTLE I",
+      desc: "Ngày 20/08/2023, The Premium Battle chính thức diễn ra với bầu không khí kịch tính và đầy đam mê của cộng đồng calisthenics Việt Nam. Giải đấu nổi bật với bảng thi đấu hấp dẫn cùng hệ thống huy chương dành cho những vận động viên xuất sắc nhất.",
+      accent: false,
+      cardTag: "Thành tích",
+      chips: ["Top 1", "Champion", "Battle"],
+      imageKeys: ["premium1_1", "premium1_2", "premium1_3", "premium1_4", "premium1_5"],
+    },
+    {
+      year: "15/07/2023",
+      title: "SOUTHERN STREET WORKOUT BATTLE 2023",
+      desc: "Sau thời gian dài ấp ủ, SOUTHERN STREET WORKOUT BATTLE 2023 chính thức khởi tranh. Southern Street Workout ra đời với sứ mệnh tổ chức các giải đấu và sự kiện Street Workout tại khu vực miền Nam Việt Nam.",
+      accent: false,
+      cardTag: "Giải đấu",
+      chips: ["Street Workout", "Battle", "2023"],
+      imageKeys: ["southern_1"],
+    },
+    {
+      year: "2020",
+      title: "Bắt đầu hành trình Calisthenics",
+      desc: "Cột mốc đầu tiên bén duyên với Calisthenics & Street Workout. Hành trình bắt đầu từ con số 0 với những bài tập cơ bản nhất. Từng giọt mồ hôi ngày đó đã xây dựng nên một nền móng vững chắc cho hiện tại.",
+      accent: false,
+      cardTag: "Hành trình",
+      chips: ["Calisthenics", "Nền tảng", "Khởi đầu"],
+      imageKeys: [],
+    },
+  ],
+  en: [
+    {
+      year: "03/30/2025",
+      title: "Battle Of Team II",
+      desc: "Participated in Battle Of Team II, continuing the journey to gain experience and level up.",
+      accent: true,
+      cardTag: "Tournament",
+      chips: ["Battle Of Team", "Street Workout", "2025"],
+      imageKeys: ["BOT_II"],
+    },
+    {
+      year: "12/31/2024",
+      title: "Judge - Battle Of Team I",
+      desc: "Invited to be a judge at Battle Of Team I, marking a new milestone in the competition journey.",
+      accent: false,
+      cardTag: "Achievement",
+      chips: ["Judge", "Battle Of Team", "2024"],
+      imageKeys: ["giamkhao_1", "giamkhao_2", "giamkhao_3", "giamkhao_4", "giamkhao"],
+    },
+    {
+      year: "04/27/2024",
+      title: "PREMIUM BATTLE II",
+      desc: "Premium Battle II is a professional event organized for the Calisthenics passionate community across Vietnam.",
+      accent: false,
+      cardTag: "Tournament",
+      chips: ["Premium", "Battle", "2024"],
+      imageKeys: ["premium2_1", "premium2_2", "premium2_3"],
+    },
+    {
+      year: "01/21/2024",
+      title: "Ultimate Battle Z 2024",
+      desc: "Participated in Ultimate Battle Z 2024, competing against strong street workout athletes in the region.",
+      accent: false,
+      cardTag: "Tournament",
+      chips: ["Battle", "Street Workout", "2024"],
+      imageKeys: ["ultimateZ_1", "ultimateZ_2"],
+    },
+    {
+      year: "12/09/2023",
+      title: "VIETNAM STREET WORKOUT CHAMPIONSHIP 2023",
+      desc: "Vietnam Street Workout Championship 2023 gathers athletes from the North, Central, and South.",
+      accent: false,
+      cardTag: "Tournament",
+      chips: ["Championship", "Street Workout", "2023"],
+      imageKeys: ["championship_1"],
+    },
+    {
+      year: "08/20/2023",
+      title: "PREMIUM BATTLE I",
+      desc: "On August 20, 2023, The Premium Battle officially took place with a dramatic and passionate atmosphere of the Vietnam calisthenics community.",
+      accent: false,
+      cardTag: "Achievement",
+      chips: ["Top 1", "Champion", "Battle"],
+      imageKeys: ["premium1_1", "premium1_2", "premium1_3", "premium1_4", "premium1_5"],
+    },
+    {
+      year: "07/15/2023",
+      title: "SOUTHERN STREET WORKOUT BATTLE 2023",
+      desc: "SOUTHERN STREET WORKOUT BATTLE 2023 officially kicked off with the mission to organize Street Workout tournaments in Southern Vietnam.",
+      accent: false,
+      cardTag: "Tournament",
+      chips: ["Street Workout", "Battle", "2023"],
+      imageKeys: ["southern_1"],
+    },
+    {
+      year: "2020",
+      title: "Starting the Calisthenics Journey",
+      desc: "First contact with calisthenics and street workout. Started practicing the basic movements and building a foundation from scratch.",
+      accent: false,
+      cardTag: "Journey",
+      chips: ["Calisthenics", "Foundation", "Start"],
+      imageKeys: [],
+    },
+  ],
+};
 
 const INTERESTS = [
   { emoji: "\u{1F4AA}", labelKey: "about_interest_1" },
@@ -220,11 +296,20 @@ function TimelineMediaCarousel({ images, title, imageAltText }) {
 }
 
 export default function AboutMe() {
-  const { t } = useLang();
-  const [timeline, setTimeline] = useState(TIMELINE_FALLBACK);
+  const { t, lang } = useLang();
+  
+  const currentFallback = TIMELINE_DATA[lang] || TIMELINE_DATA.vi;
+  const [timeline, setTimeline] = useState(currentFallback);
+  
   const [openTimelineId, setOpenTimelineId] = useState("");
   const [activeTimelineId, setActiveTimelineId] = useState("");
   const [timelineImageLookup, setTimelineImageLookup] = useState({});
+
+  useEffect(() => {
+    // Cập nhật timeline nếu language thay đổi
+    setTimeline(currentFallback);
+  }, [lang, currentFallback]);
+
   const headerLeftRef = useScrollReveal();
   const headerRightRef = useScrollReveal();
   const cardsRef = useScrollReveal();
@@ -255,7 +340,7 @@ export default function AboutMe() {
         if (Array.isArray(data) && data.length > 0) {
           // Map API response sang định dạng component (imageKeys giữ từ fallback nếu title khớp)
           const mapped = data.map((item) => {
-            const fallback = TIMELINE_FALLBACK.find(
+            const fallback = currentFallback.find(
               (f) => f.title.toLowerCase() === item.title.toLowerCase()
             );
             return {
