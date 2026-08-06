@@ -7,8 +7,8 @@ export default defineConfig(({ mode }) => {
   const apiTarget = env.VITE_API_TARGET || "http://localhost:8080";
 
   return {
-    // GitHub Pages project site path (https://<user>.github.io/calisthenics/)
-    base: "/",
+    // GitHub Pages project site path (https://ThanhTamSW.github.io/calisthenics/)
+    base: "/calisthenics/",
     plugins: [react()],
     resolve: {
       alias: {
